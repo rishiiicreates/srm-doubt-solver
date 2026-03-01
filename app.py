@@ -327,6 +327,7 @@ nav_component_html = f"""
         + '<span style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Home</span>'
         + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Chat</span>'
         + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Syllabus</span>'
+        + '<a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; text-decoration:none;">About: Know more about us</a>'
         + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
         + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Semester</label><select id="navSemSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{sem_options_html}</select></div>'
         + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Subject</label><select id="navSubjSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{subj_options_html}</select></div>'
@@ -529,6 +530,5 @@ if prompt := st.chat_input("What would you like to understand?"):
 st.markdown("""
 <div class="site-footer">
     <span>built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends</span>
-    <a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank">portfolio ↗</a>
 </div>
 """, unsafe_allow_html=True)
