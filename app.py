@@ -222,8 +222,9 @@ st.markdown("""
     }
     .site-footer a:hover { opacity: 0.8; }
 
-    /* ─── Hide defaults ─── */
+    /* ─── Hide defaults & sync inputs ─── */
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
+    div[data-testid="stTextInput"] { display: none !important; }
 
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; }
@@ -362,12 +363,27 @@ nav_component_html = f"""
 
     // ── Filter select change handlers ──
     function navigateWithFilters(sem, subj) {{
-        var url = new URL(window.parent.location.href);
-        if (sem) url.searchParams.set('sem', sem);
-        else url.searchParams.delete('sem');
-        if (subj) url.searchParams.set('subj', subj);
-        else url.searchParams.delete('subj');
-        window.parent.location.href = url.toString();
+        var inputs = doc.querySelectorAll('div[data-testid="stTextInput"] input');
+        if (inputs.length >= 2) {{
+            var semInput = inputs[0];
+            var subjInput = inputs[1];
+            
+            // React 16+ controlled input setter bypass
+            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            
+            nativeInputValueSetter.call(semInput, sem || '');
+            semInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            
+            nativeInputValueSetter.call(subjInput, (subj || '') === 'All Subjects' ? '' : (subj || ''));
+            subjInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            
+            // Force Streamlit rerun by simulating Enter press
+            setTimeout(function() {{
+                subjInput.dispatchEvent(new KeyboardEvent('keydown', {{
+                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
+                }}));
+            }}, 50);
+        }}
     }}
 
     // When semester changes: update subject dropdown options dynamically, then navigate
@@ -432,20 +448,26 @@ def format_sources_html(sources: list[dict]) -> str:
     return html
 
 
-# ── Read filter values — session_state is authoritative, query params seed it ─
+# ── Read filter values — session_state is authoritative, hidden inputs update it ──
 
-# Sync query-param → session_state on page load (JS nav panel sets URL params)
-_qp_sem = st.query_params.get("sem", "")
-_qp_subj = st.query_params.get("subj", "")
+hidden_sem = st.text_input("hidden_sem", key="st_hidden_sem", value="")
+hidden_subj = st.text_input("hidden_subj", key="st_hidden_subj", value="")
 
-if _qp_sem:
-    st.session_state["filter_semester"] = int(_qp_sem)
-elif "filter_semester" not in st.session_state:
+if hidden_sem and hidden_sem.strip():
+    st.session_state["filter_semester"] = int(hidden_sem)
+elif hidden_sem == "":
+    # Note: When JS resets to 'All Semesters', it sends empty string
     st.session_state["filter_semester"] = None
 
-if _qp_subj:
-    st.session_state["filter_subject"] = _qp_subj
-elif "filter_subject" not in st.session_state:
+if hidden_subj and hidden_subj.strip():
+    st.session_state["filter_subject"] = hidden_subj
+elif hidden_subj == "":
+    st.session_state["filter_subject"] = None
+
+# Fallback defaults if never set
+if "filter_semester" not in st.session_state:
+    st.session_state["filter_semester"] = None
+if "filter_subject" not in st.session_state:
     st.session_state["filter_subject"] = None
 
 selected_sem_num = st.session_state["filter_semester"]
