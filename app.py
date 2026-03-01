@@ -52,14 +52,9 @@ st.markdown("""
         font-family: 'Inter', -apple-system, sans-serif;
     }
 
-    /* ─── Sidebar: Orange Nav Panel (RIGHT SIDE) ─── */
-    /* Move sidebar to right by reversing flex order */
-    [data-testid="stAppViewContainer"] {
-        flex-direction: row-reverse !important;
-    }
+    /* ─── Sidebar: Orange Nav Panel ─── */
     section[data-testid="stSidebar"] {
         background: #FF4D00 !important;
-        width: 280px !important;
     }
     section[data-testid="stSidebar"] > div {
         background: #FF4D00 !important;
@@ -91,20 +86,12 @@ st.markdown("""
     section[data-testid="stSidebar"] hr {
         border-color: rgba(255,255,255,0.2) !important;
     }
-    /* Sidebar collapse/expand button — move to right, style as MENU */
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="collapsedControl"] {
-        left: auto !important;
-        right: 0.5rem !important;
-    }
-    [data-testid="stSidebarCollapsedControl"] button,
-    [data-testid="collapsedControl"] button,
+    /* Style the sidebar toggle button */
     button[kind="header"] {
         background: #FF4D00 !important;
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 0.4rem 0.6rem !important;
     }
 
     /* ─── Animations ─── */
@@ -274,6 +261,34 @@ st.markdown("""
 
 # ── Particles ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="particles"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div></div>', unsafe_allow_html=True)
+
+# ── Right-side MENU toggle button (triggers native sidebar) ───────────────────
+import streamlit.components.v1 as components
+components.html("""
+<html><body style="margin:0;padding:0;overflow:hidden;background:transparent;">
+<script>
+(function() {
+    var doc = window.parent.document;
+    if (doc.getElementById('rightMenuBtn')) return;
+    var btn = doc.createElement('button');
+    btn.id = 'rightMenuBtn';
+    btn.innerHTML = 'MENU';
+    btn.style.cssText = "position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:9999; width:36px; height:80px; background:#FF4D00; border:none; border-radius:8px 0 0 8px; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease; writing-mode:vertical-rl; text-orientation:mixed; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;";
+    btn.onmouseenter = function() { this.style.width='42px'; this.style.background='#E64400'; };
+    btn.onmouseleave = function() { this.style.width='36px'; this.style.background='#FF4D00'; };
+    btn.onclick = function() {
+        var toggle = doc.querySelector('[data-testid="stSidebarCollapsedControl"] button')
+            || doc.querySelector('[data-testid="collapsedControl"] button')
+            || doc.querySelector('button[data-testid="stExpandSidebarButton"]')
+            || doc.querySelector('button[kind="headerNoPadding"]')
+            || doc.querySelector('button[kind="header"]');
+        if (toggle) toggle.click();
+    };
+    doc.body.appendChild(btn);
+})();
+</script>
+</body></html>
+""", height=0, scrolling=False)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
