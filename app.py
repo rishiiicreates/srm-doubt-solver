@@ -204,8 +204,10 @@ st.markdown("""
        FOOTER
        ═══════════════════════════════════════════════ */
     .site-footer {
-        text-align: center;
-        padding: 2.5rem 0 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2.5rem 2rem 1.2rem;
         margin-top: 2rem;
         font-family: 'Space Grotesk', sans-serif;
         font-size: 0.72rem;
@@ -218,6 +220,7 @@ st.markdown("""
         text-decoration: none;
         font-weight: 700;
     }
+    .site-footer a:hover { opacity: 0.8; }
 
     /* ─── Hide defaults ─── */
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
@@ -525,6 +528,7 @@ if prompt := st.chat_input("What would you like to understand?"):
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="site-footer">
-    built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends
+    <span>built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends</span>
+    <a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank">portfolio ↗</a>
 </div>
 """, unsafe_allow_html=True)
