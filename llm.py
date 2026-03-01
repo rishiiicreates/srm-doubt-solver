@@ -75,44 +75,81 @@ def set_cached_response(
 # ── Query Rewriter ────────────────────────────────────────────────────────────
 
 
-def rewrite_query(raw_query: str) -> str:
+def rewrite_query(
+    raw_query: str,
+    subject: Optional[str] = None,
+    semester: Optional[int] = None,
+) -> str:
     """
     Rewrite an ambiguous student question into a clean retrieval query.
 
     Uses a lightweight LLM call to rephrase colloquial questions into
-    precise academic search queries.
+    precise academic search queries. When a subject/semester filter is
+    active, incorporates that context.
 
-    Examples:
-      "what's that theorem in unit 3 circuits?" -> "Thevenin's theorem Unit 3 Circuit Analysis"
-      "explain that sorting thing"              -> "sorting algorithms comparison"
-      "how do u do trees in ds?"                -> "tree data structure implementation"
-
-    Falls back to the original query if rewriting fails.
+    Falls back to the original query (with subject prepended) if rewriting fails.
     """
+    # Handle generic/vague queries when a subject is selected
+    generic_patterns = [
+        "tell me about this subject", "what is this subject", "about this subject",
+        "explain this subject", "this subject", "tell me about it", "what is this",
+        "explain this", "tell me everything", "overview", "syllabus",
+        "what topics", "what all topics", "topics covered",
+    ]
+    lowered = raw_query.lower().strip()
+    if subject and any(pat in lowered for pat in generic_patterns):
+        return f"{subject} syllabus topics overview"
+
+    # If subject is selected, prepend it to the query for better retrieval
+    enhanced_query = raw_query
+    if subject and subject.lower() not in raw_query.lower():
+        enhanced_query = f"{subject}: {raw_query}"
+
     # Skip rewriting for queries that are already clear and academic
-    if _is_clear_query(raw_query):
-        return raw_query
+    if _is_clear_query(enhanced_query):
+        return enhanced_query
 
     llm = create_llm()
+
+    # Build context-aware rewrite prompt
+    context_hint = ""
+    if subject and semester:
+        context_hint = f"The student is studying '{subject}' (Semester {semester}). "
+    elif subject:
+        context_hint = f"The student is studying '{subject}'. "
+
     rewrite_prompt = (
         "You are a search query optimizer for a college syllabus database. "
+        f"{context_hint}"
         "Rewrite the following student question into a precise, concise academic "
         "search query. Keep subject names, unit numbers, and technical terms. "
         "Remove filler words, slang, and ambiguity. "
-        "Return ONLY the rewritten query, nothing else.\n\n"
+        "Return ONLY the rewritten query, nothing else. "
+        "Do NOT use placeholders like [Subject Name] — use actual terms.\n\n"
         f"Student question: {raw_query}\n\n"
         "Rewritten query:"
     )
 
     try:
-        rewritten = llm.invoke(rewrite_prompt).strip()
-        # Sanity check: rewritten query should be reasonable length
-        if rewritten and 3 < len(rewritten) < 200:
+        rewritten = llm.invoke(rewrite_prompt).strip().strip('"').strip("'")
+        # Sanity checks:
+        # - Reasonable length
+        # - Not a template (contains [ or ] brackets)
+        # - Not identical to the prompt structure
+        if (rewritten
+            and 3 < len(rewritten) < 200
+            and "[" not in rewritten
+            and "]" not in rewritten
+            and "Subject Name" not in rewritten
+            and "Unit Number" not in rewritten):
+            # Ensure subject context is in the rewritten query if filter is active
+            if subject and subject.lower() not in rewritten.lower():
+                rewritten = f"{subject} {rewritten}"
             return rewritten
     except Exception as e:
         print(f"  ⚠ Query rewriting failed: {e}")
 
-    return raw_query
+    return enhanced_query
 
 
 def _is_clear_query(query: str) -> bool:
@@ -208,7 +245,7 @@ def generate_response(
         Dict with keys: answer, sources, rewritten_query, was_cached, should_refuse
     """
     # Step 1: Rewrite query for better retrieval
-    rewritten_query = rewrite_query(query)
+    rewritten_query = rewrite_query(query, subject=subject, semester=semester)
 
     # Step 2: Check cache
     if use_cache:
@@ -292,7 +329,7 @@ def generate_response_stream(
       - answer: full answer text (for type="done")
     """
     # Step 1: Rewrite query
-    rewritten_query = rewrite_query(query)
+    rewritten_query = rewrite_query(query, subject=subject, semester=semester)
 
     # Step 2: Check cache
     cached = get_cached_response(rewritten_query, semester, subject)
