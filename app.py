@@ -279,100 +279,63 @@ for subj in subjects_list:
     sel = ' selected' if subj == current_subj else ''
     subj_options_html += f'<option value="{subj}"{sel}>{subj}</option>'
 
-# Inject nav panel via script (bypasses st.markdown's HTML sanitization)
-st.markdown(f"""
+# Build semester->subjects JSON map for dynamic JS filtering
+import json as _json
+sem_subjects_map = {}
+for s in semesters:
+    sem_subjects_map[str(s)] = get_subjects_for_semester(s)
+sem_subjects_map[""] = all_subjects  # "All Semesters" key
+sem_subjects_json = _json.dumps(sem_subjects_map)
+
+# Inject nav panel via components.html (st.markdown strips <script> tags!)
+import streamlit.components.v1 as components
+
+nav_component_html = f"""
+<html><body style="margin:0;padding:0;overflow:hidden;background:transparent;">
 <script>
 (function() {{
+    var doc = window.parent.document;
+
     // Prevent duplicate creation on Streamlit reruns
-    if (document.getElementById('navPanel')) return;
+    if (doc.getElementById('navPanel')) return;
 
     // ── Create toggle button ──
-    var toggle = document.createElement('button');
+    var toggle = doc.createElement('button');
     toggle.id = 'navToggleBtn';
     toggle.innerHTML = 'MENU';
-    toggle.style.cssText = `
-        position:fixed; top:50%; right:0; transform:translateY(-50%);
-        z-index:9999; width:36px; height:80px; background:#FF4D00; border:none;
-        border-radius:8px 0 0 8px; color:white; cursor:pointer;
-        display:flex; align-items:center; justify-content:center;
-        box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease;
-        writing-mode:vertical-rl; text-orientation:mixed;
-        font-family:'Space Grotesk',sans-serif; font-weight:700;
-        font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;
-    `;
+    toggle.style.cssText = "position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:9999; width:36px; height:80px; background:#FF4D00; border:none; border-radius:8px 0 0 8px; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease; writing-mode:vertical-rl; text-orientation:mixed; font-family:Space Grotesk,sans-serif; font-weight:700; font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;";
     toggle.onmouseenter = function() {{ this.style.width='42px'; this.style.background='#E64400'; }};
     toggle.onmouseleave = function() {{ this.style.width='36px'; this.style.background='#FF4D00'; }};
 
     // ── Create overlay ──
-    var overlay = document.createElement('div');
+    var overlay = doc.createElement('div');
     overlay.id = 'navOverlay';
-    overlay.style.cssText = `
-        position:fixed; top:0; left:0; width:100vw; height:100vh;
-        background:rgba(0,0,0,0.3); backdrop-filter:blur(3px);
-        z-index:9998; opacity:0; pointer-events:none; transition:opacity 0.3s ease;
-    `;
+    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); backdrop-filter:blur(3px); z-index:9998; opacity:0; pointer-events:none; transition:opacity 0.3s ease;";
 
     // ── Create panel ──
-    var panel = document.createElement('div');
+    var panel = doc.createElement('div');
     panel.id = 'navPanel';
-    panel.style.cssText = `
-        position:fixed; top:0; right:-320px; width:300px; height:100vh;
-        background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem;
-        transition:right 0.35s cubic-bezier(0.4,0,0.2,1);
-        box-shadow:-6px 0 40px rgba(0,0,0,0.2);
-        display:flex; flex-direction:column; overflow-y:auto;
-        font-family:'Space Grotesk',sans-serif;
-    `;
+    panel.style.cssText = "position:fixed; top:0; right:-320px; width:300px; height:100vh; background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:-6px 0 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; overflow-y:auto; font-family:Space Grotesk,sans-serif;";
 
-    panel.innerHTML = `
-        <button id="navCloseBtn" style="
-            position:absolute; top:1.2rem; right:1.2rem;
-            background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25);
-            color:white; width:32px; height:32px; border-radius:50%;
-            font-size:1rem; cursor:pointer; display:flex; align-items:center;
-            justify-content:center; transition:all 0.2s ease;
-        ">✕</button>
-        <div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:2px; line-height:1.1;">
-            Doubt<br>Solver.
-        </div>
-        <div style="font-family:Inter,sans-serif; font-size:0.6rem; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:4px; margin-top:0.3rem;">
-            AI Study Companion
-        </div>
-        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
-        <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Home</span>
-        <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Chat</span>
-        <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Syllabus</span>
-        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
-        <div style="margin-bottom:0.8rem;">
-            <label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Semester</label>
-            <select id="navSemSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer; -webkit-appearance:none; appearance:none;">
-                {sem_options_html}
-            </select>
-        </div>
-        <div style="margin-bottom:0.8rem;">
-            <label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Subject</label>
-            <select id="navSubjSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer; -webkit-appearance:none; appearance:none;">
-                {subj_options_html}
-            </select>
-        </div>
-        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
-        <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;">
-            <span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>
-            {status_text}
-        </span>
-        <p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">
-            {total_subjects_count} subjects · {total_semesters} semesters
-        </p>
-        <div style="margin-top:auto; text-align:center;">
-            <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
-            <a href="https://github.com/rishiiicreates" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a>
-        </div>
-    `;
+    panel.innerHTML = '<button id="navCloseBtn" style="position:absolute; top:1.2rem; right:1.2rem; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:white; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;">✕</button>'
+        + '<div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:2px; line-height:1.1;">Doubt<br>Solver.</div>'
+        + '<div style="font-family:Inter,sans-serif; font-size:0.6rem; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:4px; margin-top:0.3rem;">AI Study Companion</div>'
+        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
+        + '<span style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Home</span>'
+        + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Chat</span>'
+        + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Syllabus</span>'
+        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
+        + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Semester</label><select id="navSemSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{sem_options_html}</select></div>'
+        + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Subject</label><select id="navSubjSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{subj_options_html}</select></div>'
+        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
+        + '<span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;"><span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>{status_text}</span>'
+        + '<p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">{total_subjects_count} subjects · {total_semesters} semesters</p>'
+        + '<div style="margin-top:auto; text-align:center;"><hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;"><a href="https://github.com/rishiiicreates" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a></div>';
 
-    // ── Add to page ──
-    document.body.appendChild(toggle);
-    document.body.appendChild(overlay);
-    document.body.appendChild(panel);
+    // ── Add to parent page ──
+    doc.body.appendChild(toggle);
+    doc.body.appendChild(overlay);
+    doc.body.appendChild(panel);
 
     // ── Event listeners ──
     function openNav() {{
@@ -388,34 +351,13 @@ st.markdown(f"""
 
     toggle.addEventListener('click', openNav);
     overlay.addEventListener('click', closeNav);
-    document.getElementById('navCloseBtn').addEventListener('click', closeNav);
-    document.getElementById('navCloseBtn').addEventListener('mouseenter', function() {{
-        this.style.background = 'rgba(255,255,255,0.3)';
-        this.style.transform = 'rotate(90deg)';
-    }});
-    document.getElementById('navCloseBtn').addEventListener('mouseleave', function() {{
-        this.style.background = 'rgba(255,255,255,0.15)';
-        this.style.transform = 'rotate(0deg)';
-    }});
+    doc.getElementById('navCloseBtn').addEventListener('click', closeNav);
 
-    // Hover effects on nav links
-    document.querySelectorAll('.np-nav-link').forEach(function(link) {{
-        link.addEventListener('mouseenter', function() {{
-            this.style.color = 'white';
-            this.style.paddingLeft = '10px';
-        }});
-        link.addEventListener('mouseleave', function() {{
-            if (!this.classList.contains('active')) {{
-                this.style.color = 'rgba(255,255,255,0.65)';
-                this.style.paddingLeft = '0';
-            }}
-        }});
-    }});
+    // ── Semester -> Subjects map for dynamic filtering ──
+    var semSubjects = {sem_subjects_json};
 
     // ── Filter select change handlers ──
-    function updateFilters() {{
-        var sem = document.getElementById('navSemSelect').value;
-        var subj = document.getElementById('navSubjSelect').value;
+    function navigateWithFilters(sem, subj) {{
         var url = new URL(window.parent.location.href);
         if (sem) url.searchParams.set('sem', sem);
         else url.searchParams.delete('sem');
@@ -423,11 +365,38 @@ st.markdown(f"""
         else url.searchParams.delete('subj');
         window.parent.location.href = url.toString();
     }}
-    document.getElementById('navSemSelect').addEventListener('change', updateFilters);
-    document.getElementById('navSubjSelect').addEventListener('change', updateFilters);
+
+    // When semester changes: update subject dropdown options dynamically, then navigate
+    doc.getElementById('navSemSelect').addEventListener('change', function() {{
+        var sem = this.value;
+        var subjSelect = doc.getElementById('navSubjSelect');
+        var subjects = semSubjects[sem] || semSubjects[''];
+
+        // Rebuild subject dropdown
+        subjSelect.innerHTML = '<option value="">All Subjects</option>';
+        subjects.forEach(function(s) {{
+            var opt = doc.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            subjSelect.appendChild(opt);
+        }});
+
+        // Navigate with new semester, clear subject
+        navigateWithFilters(sem, '');
+    }});
+
+    // When subject changes: navigate immediately
+    doc.getElementById('navSubjSelect').addEventListener('change', function() {{
+        var sem = doc.getElementById('navSemSelect').value;
+        var subj = this.value;
+        navigateWithFilters(sem, subj);
+    }});
 }})();
 </script>
-""", unsafe_allow_html=True)
+</body></html>
+"""
+
+components.html(nav_component_html, height=0, scrolling=False)
 
 
 def format_sources_html(sources: list[dict]) -> str:

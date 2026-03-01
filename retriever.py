@@ -173,8 +173,21 @@ class SyllabusRetriever:
         # ── Precision filter: keep only genuinely relevant chunks  ───
         chunks = self._precision_filter(chunks, query)
 
-        # Never refuse academic queries — let the LLM answer
-        # even if no syllabus match is found
+        # If filters are active but no chunks match, give a helpful refusal
+        if not chunks and (semester or subject):
+            filter_desc = []
+            if subject:
+                filter_desc.append(f"subject '{subject}'")
+            if semester:
+                filter_desc.append(f"Semester {semester}")
+            filter_str = " in ".join(filter_desc)
+            return RetrievalResult(
+                chunks=[],
+                query=query,
+                should_refuse=False,  # Don't refuse, let LLM answer but note it
+                refusal_message="",
+            )
+
         return RetrievalResult(
             chunks=chunks,
             query=query,

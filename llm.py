@@ -132,12 +132,37 @@ def _is_clear_query(query: str) -> bool:
 # ── Prompt Construction ──────────────────────────────────────────────────────
 
 
-def build_prompt(query: str, context: str) -> str:
+def build_prompt(
+    query: str,
+    context: str,
+    semester: Optional[int] = None,
+    subject: Optional[str] = None,
+) -> str:
     """
     Build the full prompt with system instructions and context.
     The system prompt is HARDCODED and injected here — it cannot be
     overridden or manipulated by user input.
     """
+    # Add filter context so LLM knows what subject/semester the student selected
+    filter_note = ""
+    if subject and semester:
+        filter_note = (
+            f"\n\nIMPORTANT: The student is currently studying '{subject}' "
+            f"(Semester {semester}). Focus your answer on this subject. "
+            f"If the question is about a topic within '{subject}', answer "
+            f"specifically for that subject's curriculum."
+        )
+    elif subject:
+        filter_note = (
+            f"\n\nIMPORTANT: The student is currently studying '{subject}'. "
+            f"Focus your answer on this subject's curriculum."
+        )
+    elif semester:
+        filter_note = (
+            f"\n\nIMPORTANT: The student is studying Semester {semester} subjects. "
+            f"Focus your answer on topics from this semester."
+        )
+
     if context.strip():
         context_section = (
             "=== OFFICIAL SYLLABUS CONTEXT ===\n\n"
@@ -153,7 +178,7 @@ def build_prompt(query: str, context: str) -> str:
         )
 
     prompt = (
-        f"{SYSTEM_PROMPT}\n\n"
+        f"{SYSTEM_PROMPT}{filter_note}\n\n"
         f"{context_section}\n\n"
         f"Student Question: {query}\n\n"
         "Answer:"
@@ -212,7 +237,7 @@ def generate_response(
 
     # Step 5: Build prompt with context
     context = retrieval_result.context_text
-    prompt = build_prompt(query, context)
+    prompt = build_prompt(query, context, semester=semester, subject=subject)
 
     # Step 6: Generate response
     llm = create_llm()
@@ -306,7 +331,7 @@ def generate_response_stream(
 
     # Step 6: Build prompt and stream response
     context = retrieval_result.context_text
-    prompt = build_prompt(query, context)
+    prompt = build_prompt(query, context, semester=semester, subject=subject)
     llm = create_llm()
 
     full_answer = ""
