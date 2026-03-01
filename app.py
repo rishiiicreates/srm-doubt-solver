@@ -95,36 +95,7 @@ st.markdown("""
     .p:nth-child(4) { width: 5px; height: 5px; background: rgba(255,171,118,0.2); top: 65%; right: 6%; animation-delay: 2s; animation-duration: 6s; }
     .p:nth-child(5) { width: 9px; height: 9px; background: rgba(255,77,0,0.1); top: 38%; right: 22%; animation-delay: 4s; animation-duration: 10s; }
 
-    /* ═══════════════════════════════════════════════
-       FILTER BAR (inline, minimal)
-       ═══════════════════════════════════════════════ */
-    .filter-bar {
-        display: flex;
-        gap: 0.6rem;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        animation: fade-up 0.5s ease-out;
-    }
-    .filter-bar .stSelectbox {
-        min-width: 160px;
-    }
-    .filter-bar .stSelectbox label { display: none !important; }
-    .filter-bar .stSelectbox > div > div {
-        background: rgba(255,255,255,0.75) !important;
-        border: 1px solid rgba(0,0,0,0.06) !important;
-        border-radius: 50px !important;
-        font-family: 'Inter', sans-serif !important;
-        font-size: 0.78rem !important;
-        color: var(--charcoal) !important;
-        padding: 0.1rem 0.5rem !important;
-        backdrop-filter: blur(8px) !important;
-        box-shadow: 0 1px 6px rgba(0,0,0,0.04) !important;
-    }
-    .filter-bar .stSelectbox > div > div:hover {
-        border-color: var(--orange) !important;
-        box-shadow: 0 2px 10px rgba(255,77,0,0.08) !important;
-    }
+
 
     /* ═══════════════════════════════════════════════
        HERO HEADER
@@ -262,6 +233,20 @@ st.markdown("""
 st.markdown('<div class="particles"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div></div>', unsafe_allow_html=True)
 
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def get_syllabus_semesters() -> list[int]:
+    return sorted(set(info["semester"] for info in SYLLABUS_KB.values()))
+
+def get_subjects_for_semester(semester: int) -> list[str]:
+    return sorted(name for name, info in SYLLABUS_KB.items() if info["semester"] == semester)
+
+def get_all_subjects() -> list[str]:
+    return sorted(SYLLABUS_KB.keys())
+
+
+# ── Build filter options for nav panel ────────────────────────────────────────
+
 from retriever import get_retriever
 try:
     doc_count = get_retriever().collection_count
@@ -269,8 +254,30 @@ try:
 except Exception:
     status_text = "Not ready"
 
-total_subjects = len(SYLLABUS_KB)
-total_semesters = len(set(info["semester"] for info in SYLLABUS_KB.values()))
+total_subjects_count = len(SYLLABUS_KB)
+semesters = get_syllabus_semesters()
+total_semesters = len(semesters)
+all_subjects = get_all_subjects()
+
+# Build semester <option> tags
+current_sem = st.query_params.get("sem", "")
+current_subj = st.query_params.get("subj", "")
+
+sem_options_html = '<option value="">All Semesters</option>'
+for s in semesters:
+    sel = ' selected' if str(s) == current_sem else ''
+    sem_options_html += f'<option value="{s}"{sel}>Semester {s}</option>'
+
+# Build subject options based on selected semester
+if current_sem:
+    subjects_list = get_subjects_for_semester(int(current_sem))
+else:
+    subjects_list = all_subjects
+
+subj_options_html = '<option value="">All Subjects</option>'
+for subj in subjects_list:
+    sel = ' selected' if subj == current_subj else ''
+    subj_options_html += f'<option value="{subj}"{sel}>{subj}</option>'
 
 # Inject nav panel via script (bypasses st.markdown's HTML sanitization)
 st.markdown(f"""
@@ -336,12 +343,25 @@ st.markdown(f"""
         <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Chat</span>
         <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Syllabus</span>
         <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
+        <div style="margin-bottom:0.8rem;">
+            <label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Semester</label>
+            <select id="navSemSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer; -webkit-appearance:none; appearance:none;">
+                {sem_options_html}
+            </select>
+        </div>
+        <div style="margin-bottom:0.8rem;">
+            <label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Subject</label>
+            <select id="navSubjSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer; -webkit-appearance:none; appearance:none;">
+                {subj_options_html}
+            </select>
+        </div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
         <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;">
             <span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>
             {status_text}
         </span>
         <p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">
-            {total_subjects} subjects · {total_semesters} semesters
+            {total_subjects_count} subjects · {total_semesters} semesters
         </p>
         <div style="margin-top:auto; text-align:center;">
             <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
@@ -391,21 +411,24 @@ st.markdown(f"""
             }}
         }});
     }});
+
+    // ── Filter select change handlers ──
+    function updateFilters() {{
+        var sem = document.getElementById('navSemSelect').value;
+        var subj = document.getElementById('navSubjSelect').value;
+        var url = new URL(window.parent.location.href);
+        if (sem) url.searchParams.set('sem', sem);
+        else url.searchParams.delete('sem');
+        if (subj) url.searchParams.set('subj', subj);
+        else url.searchParams.delete('subj');
+        window.parent.location.href = url.toString();
+    }}
+    document.getElementById('navSemSelect').addEventListener('change', updateFilters);
+    document.getElementById('navSubjSelect').addEventListener('change', updateFilters);
 }})();
 </script>
 """, unsafe_allow_html=True)
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def get_syllabus_semesters() -> list[int]:
-    return sorted(set(info["semester"] for info in SYLLABUS_KB.values()))
-
-def get_subjects_for_semester(semester: int) -> list[str]:
-    return sorted(name for name, info in SYLLABUS_KB.items() if info["semester"] == semester)
-
-def get_all_subjects() -> list[str]:
-    return sorted(SYLLABUS_KB.keys())
 
 def format_sources_html(sources: list[dict]) -> str:
     if not sources:
@@ -436,6 +459,12 @@ def format_sources_html(sources: list[dict]) -> str:
     return html
 
 
+# ── Read filter values from query params (set by nav panel JS) ────────────────
+
+selected_sem_num = int(current_sem) if current_sem else None
+selected_subject = current_subj if current_subj else None
+
+
 # ── Session State ─────────────────────────────────────────────────────────────
 
 if "messages" not in st.session_state:
@@ -452,22 +481,6 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True,
 )
-
-
-# ── Inline Filters (minimal pill selects) ─────────────────────────────────────
-
-semesters = get_syllabus_semesters()
-sem_options = ["All Semesters"] + [f"Semester {s}" for s in semesters]
-subjects_all = get_all_subjects()
-
-col1, col2 = st.columns(2)
-with col1:
-    selected_sem = st.selectbox("Semester", options=sem_options, index=0, label_visibility="collapsed")
-    selected_sem_num = int(selected_sem.split()[-1]) if selected_sem != "All Semesters" else None
-with col2:
-    subjects = get_subjects_for_semester(selected_sem_num) if selected_sem_num else subjects_all
-    subj_options = ["All Subjects"] + subjects
-    selected_subject = st.selectbox("Subject", options=subj_options, index=0, label_visibility="collapsed")
 
 
 # ── Chat History ──────────────────────────────────────────────────────────────
@@ -490,7 +503,7 @@ if prompt := st.chat_input("What would you like to understand?"):
 
     with st.chat_message("assistant"):
         semester_filter = selected_sem_num
-        subject_filter = selected_subject if selected_subject != "All Subjects" else None
+        subject_filter = selected_subject
 
         with st.spinner("Thinking..."):
             resp_ph = st.empty()
