@@ -446,8 +446,7 @@ with st.sidebar:
 
 st.markdown(
     '<div class="hero">'
-    '<h1 class="hero-title">Ask your <span class="hl">doubts</span>,<br>get expert answers</h1>'
-    '<p class="hero-sub">Covers every subject in the SRM syllabus. Detailed, professor-quality explanations.</p>'
+    '<h1 class="hero-title">What do you want<br>to <span class="hl">learn</span> today?</h1>'
     '</div>',
     unsafe_allow_html=True,
 )
