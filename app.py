@@ -1,11 +1,12 @@
 """
-Streamlit Chat UI — SRM College Doubt-Solving Agent.
+Streamlit Chat UI — Doubt-Solving Agent.
 
-Clean, minimal design inspired by portfolio-style navigation.
+Clean, minimal design with right-side floating nav panel.
   - Warm gradient with floating particles
-  - Bold, uppercase sidebar navigation
-  - @rishiicreates footer
+  - Floating ☰ button on the right that opens a panel
+  - Inline filters in main area
   - Glassmorphic source cards
+  - 'built by rishiicreates and friends' footer
 """
 
 import streamlit as st
@@ -18,10 +19,10 @@ from generate_syllabus_kb import SYLLABUS_KB
 # ── Page Configuration ────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="SRM Doubt Solver",
+    page_title="Doubt Solver",
     page_icon="🎓",
     layout="centered",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
@@ -51,6 +52,18 @@ st.markdown("""
         font-family: 'Inter', -apple-system, sans-serif;
     }
 
+    /* ─── Completely hide sidebar ─── */
+    section[data-testid="stSidebar"],
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    button[kind="header"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+
     /* ─── Animations ─── */
     @keyframes float-particle {
         0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.35; }
@@ -64,6 +77,14 @@ st.markdown("""
         0%, 100% { opacity: 1; }
         50% { opacity: 0.4; }
     }
+    @keyframes slide-in-right {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slide-out-right {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
 
     /* ─── Particles ─── */
     .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
@@ -75,144 +96,34 @@ st.markdown("""
     .p:nth-child(5) { width: 9px; height: 9px; background: rgba(255,77,0,0.1); top: 38%; right: 22%; animation-delay: 4s; animation-duration: 10s; }
 
     /* ═══════════════════════════════════════════════
-       SIDEBAR — Bold, Minimal, Portfolio-Style
+       FILTER BAR (inline, minimal)
        ═══════════════════════════════════════════════ */
-
-    section[data-testid="stSidebar"] {
-        background: var(--orange) !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    section[data-testid="stSidebar"] * {
-        color: white !important;
-        border-color: rgba(255,255,255,0.15) !important;
-    }
-
-    /* ─ Sidebar Brand ─ */
-    .sb-brand {
-        padding: 1.5rem 0 0.5rem;
-        text-align: left;
-    }
-    .sb-name {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin: 0;
-    }
-    .sb-sub {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.65rem;
-        color: rgba(255,255,255,0.65);
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-top: 0.2rem;
-    }
-
-    /* ─ Sidebar Divider ─ */
-    .sb-div {
-        border: none;
-        border-top: 1px solid rgba(255,255,255,0.2);
-        margin: 1rem 0;
-    }
-
-    /* ─ Sidebar Labels ─ */
-    section[data-testid="stSidebar"] .stSelectbox label {
-        font-family: 'Space Grotesk', sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 0.7rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 2px !important;
-        color: rgba(255,255,255,0.8) !important;
-    }
-
-    /* ─ Sidebar Selects ─ */
-    section[data-testid="stSidebar"] .stSelectbox > div > div {
-        background: rgba(255,255,255,0.12) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        border-radius: 8px !important;
-        color: white !important;
-        font-family: 'Inter', sans-serif !important;
-        font-size: 0.85rem !important;
-    }
-    section[data-testid="stSidebar"] .stSelectbox > div > div:hover {
-        background: rgba(255,255,255,0.2) !important;
-        border-color: rgba(255,255,255,0.4) !important;
-    }
-    section[data-testid="stSidebar"] [data-baseweb="select"] span {
-        color: white !important;
-    }
-
-    /* ─ Sidebar Status ─ */
-    .sb-status {
-        display: inline-flex;
+    .filter-bar {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: center;
         align-items: center;
-        gap: 6px;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 50px;
-        padding: 0.3rem 0.8rem;
-        font-family: 'Inter', sans-serif;
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: white;
+        margin-bottom: 0.5rem;
+        animation: fade-up 0.5s ease-out;
     }
-    .sb-dot {
-        width: 6px; height: 6px;
-        background: #4ade80;
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse-dot 2s ease-in-out infinite;
+    .filter-bar .stSelectbox {
+        min-width: 160px;
     }
-
-    /* ─ Sidebar Info ─ */
-    .sb-info {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.68rem;
-        color: rgba(255,255,255,0.55);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: -0.2rem;
+    .filter-bar .stSelectbox label { display: none !important; }
+    .filter-bar .stSelectbox > div > div {
+        background: rgba(255,255,255,0.75) !important;
+        border: 1px solid rgba(0,0,0,0.06) !important;
+        border-radius: 50px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.78rem !important;
+        color: var(--charcoal) !important;
+        padding: 0.1rem 0.5rem !important;
+        backdrop-filter: blur(8px) !important;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.04) !important;
     }
-
-    /* ─ Sidebar Button ─ */
-    section[data-testid="stSidebar"] .stButton > button {
-        background: rgba(255,255,255,0.15) !important;
-        color: white !important;
-        border: 1px solid rgba(255,255,255,0.25) !important;
-        border-radius: 8px !important;
-        font-family: 'Space Grotesk', sans-serif !important;
-        font-weight: 600 !important;
-        font-size: 0.75rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 1.5px !important;
-        padding: 0.45rem 1rem !important;
-        transition: all 0.25s ease !important;
-    }
-    section[data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(255,255,255,0.25) !important;
-        border-color: rgba(255,255,255,0.45) !important;
-        transform: translateY(-1px) !important;
-    }
-
-    /* ─ Sidebar Footer ─ */
-    .sb-footer {
-        font-family: 'Space Grotesk', sans-serif;
-        color: rgba(255,255,255,0.5);
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        text-align: center;
-        padding: 0.5rem 0;
-    }
-    .sb-footer a {
-        color: white !important;
-        text-decoration: none;
-        font-weight: 700;
-        letter-spacing: 1.5px;
+    .filter-bar .stSelectbox > div > div:hover {
+        border-color: var(--orange) !important;
+        box-shadow: 0 2px 10px rgba(255,77,0,0.08) !important;
     }
 
     /* ═══════════════════════════════════════════════
@@ -237,14 +148,6 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-    }
-    .hero-sub {
-        font-family: 'Inter', sans-serif;
-        color: var(--warm-gray);
-        font-size: 0.95rem;
-        line-height: 1.55;
-        max-width: 440px;
-        margin: 0 auto;
     }
 
     /* ═══════════════════════════════════════════════
@@ -326,6 +229,25 @@ st.markdown("""
     }
     .src-item strong { color: var(--orange); font-weight: 600; }
 
+    /* ═══════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════ */
+    .site-footer {
+        text-align: center;
+        padding: 2.5rem 0 1.2rem;
+        margin-top: 2rem;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.72rem;
+        color: #9CA3AF;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+    .site-footer a {
+        color: var(--orange);
+        text-decoration: none;
+        font-weight: 700;
+    }
+
     /* ─── Hide defaults ─── */
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
 
@@ -338,6 +260,140 @@ st.markdown("""
 
 # ── Particles ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="particles"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div></div>', unsafe_allow_html=True)
+
+
+from retriever import get_retriever
+try:
+    doc_count = get_retriever().collection_count
+    status_text = f"{doc_count} indexed"
+except Exception:
+    status_text = "Not ready"
+
+total_subjects = len(SYLLABUS_KB)
+total_semesters = len(set(info["semester"] for info in SYLLABUS_KB.values()))
+
+# Inject nav panel via script (bypasses st.markdown's HTML sanitization)
+st.markdown(f"""
+<script>
+(function() {{
+    // Prevent duplicate creation on Streamlit reruns
+    if (document.getElementById('navPanel')) return;
+
+    // ── Create toggle button ──
+    var toggle = document.createElement('button');
+    toggle.id = 'navToggleBtn';
+    toggle.innerHTML = 'MENU';
+    toggle.style.cssText = `
+        position:fixed; top:50%; right:0; transform:translateY(-50%);
+        z-index:9999; width:36px; height:80px; background:#FF4D00; border:none;
+        border-radius:8px 0 0 8px; color:white; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease;
+        writing-mode:vertical-rl; text-orientation:mixed;
+        font-family:'Space Grotesk',sans-serif; font-weight:700;
+        font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;
+    `;
+    toggle.onmouseenter = function() {{ this.style.width='42px'; this.style.background='#E64400'; }};
+    toggle.onmouseleave = function() {{ this.style.width='36px'; this.style.background='#FF4D00'; }};
+
+    // ── Create overlay ──
+    var overlay = document.createElement('div');
+    overlay.id = 'navOverlay';
+    overlay.style.cssText = `
+        position:fixed; top:0; left:0; width:100vw; height:100vh;
+        background:rgba(0,0,0,0.3); backdrop-filter:blur(3px);
+        z-index:9998; opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+    `;
+
+    // ── Create panel ──
+    var panel = document.createElement('div');
+    panel.id = 'navPanel';
+    panel.style.cssText = `
+        position:fixed; top:0; right:-320px; width:300px; height:100vh;
+        background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem;
+        transition:right 0.35s cubic-bezier(0.4,0,0.2,1);
+        box-shadow:-6px 0 40px rgba(0,0,0,0.2);
+        display:flex; flex-direction:column; overflow-y:auto;
+        font-family:'Space Grotesk',sans-serif;
+    `;
+
+    panel.innerHTML = `
+        <button id="navCloseBtn" style="
+            position:absolute; top:1.2rem; right:1.2rem;
+            background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25);
+            color:white; width:32px; height:32px; border-radius:50%;
+            font-size:1rem; cursor:pointer; display:flex; align-items:center;
+            justify-content:center; transition:all 0.2s ease;
+        ">✕</button>
+        <div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:2px; line-height:1.1;">
+            Doubt<br>Solver.
+        </div>
+        <div style="font-family:Inter,sans-serif; font-size:0.6rem; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:4px; margin-top:0.3rem;">
+            AI Study Companion
+        </div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
+        <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Home</span>
+        <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Chat</span>
+        <span class="np-nav-link" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; cursor:pointer;">Syllabus</span>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
+        <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;">
+            <span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>
+            {status_text}
+        </span>
+        <p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">
+            {total_subjects} subjects · {total_semesters} semesters
+        </p>
+        <div style="margin-top:auto; text-align:center;">
+            <hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">
+            <a href="https://github.com/rishiiicreates" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a>
+        </div>
+    `;
+
+    // ── Add to page ──
+    document.body.appendChild(toggle);
+    document.body.appendChild(overlay);
+    document.body.appendChild(panel);
+
+    // ── Event listeners ──
+    function openNav() {{
+        panel.style.right = '0';
+        overlay.style.opacity = '1';
+        overlay.style.pointerEvents = 'all';
+    }}
+    function closeNav() {{
+        panel.style.right = '-320px';
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+    }}
+
+    toggle.addEventListener('click', openNav);
+    overlay.addEventListener('click', closeNav);
+    document.getElementById('navCloseBtn').addEventListener('click', closeNav);
+    document.getElementById('navCloseBtn').addEventListener('mouseenter', function() {{
+        this.style.background = 'rgba(255,255,255,0.3)';
+        this.style.transform = 'rotate(90deg)';
+    }});
+    document.getElementById('navCloseBtn').addEventListener('mouseleave', function() {{
+        this.style.background = 'rgba(255,255,255,0.15)';
+        this.style.transform = 'rotate(0deg)';
+    }});
+
+    // Hover effects on nav links
+    document.querySelectorAll('.np-nav-link').forEach(function(link) {{
+        link.addEventListener('mouseenter', function() {{
+            this.style.color = 'white';
+            this.style.paddingLeft = '10px';
+        }});
+        link.addEventListener('mouseleave', function() {{
+            if (!this.classList.contains('active')) {{
+                this.style.color = 'rgba(255,255,255,0.65)';
+                this.style.paddingLeft = '0';
+            }}
+        }});
+    }});
+}})();
+</script>
+""", unsafe_allow_html=True)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -371,7 +427,6 @@ def format_sources_html(sources: list[dict]) -> str:
             parts.append(f"Unit: {unit_name}")
         elif src.get("unit_number"):
             parts.append(f"Unit {src['unit_number']}")
-        # Show match confidence
         score = src.get("similarity_score", 0)
         if score:
             pct = int(score * 100)
@@ -389,59 +444,6 @@ if "sources_map" not in st.session_state:
     st.session_state.sources_map = {}
 
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-
-with st.sidebar:
-    st.markdown(
-        '<div class="sb-brand">'
-        '<p class="sb-name">SRM Doubt<br>Solver.</p>'
-        '<p class="sb-sub">AI Study Companion</p>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
-
-    # Semester
-    semesters = get_syllabus_semesters()
-    sem_options = ["All Semesters"] + [f"Semester {s}" for s in semesters]
-    selected_sem = st.selectbox("Semester", options=sem_options, index=0)
-    selected_sem_num = int(selected_sem.split()[-1]) if selected_sem != "All Semesters" else None
-
-    # Subject
-    subjects = get_subjects_for_semester(selected_sem_num) if selected_sem_num else get_all_subjects()
-    subj_options = ["All Subjects"] + subjects
-    selected_subject = st.selectbox("Subject", options=subj_options, index=0)
-
-    count_text = f"{len(subjects)} subjects in Sem {selected_sem_num}" if selected_sem_num else f"{len(SYLLABUS_KB)} subjects · {len(semesters)} semesters"
-    st.markdown(f'<p class="sb-info">{count_text}</p>', unsafe_allow_html=True)
-
-    st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
-
-    # Status
-    from retriever import get_retriever
-    try:
-        doc_count = get_retriever().collection_count
-        if doc_count > 0:
-            st.markdown(f'<span class="sb-status"><span class="sb-dot"></span> {doc_count} indexed</span>', unsafe_allow_html=True)
-        else:
-            st.markdown('<span class="sb-status">⚠ Run ingest.py</span>', unsafe_allow_html=True)
-    except Exception:
-        st.markdown('<span class="sb-status">⚠ Not ready</span>', unsafe_allow_html=True)
-
-    st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
-
-    if st.button("Clear Chat", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.sources_map = {}
-        st.rerun()
-
-    st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="sb-footer"><a href="https://github.com/rishiiicreates" target="_blank">@rishiicreates</a></p>',
-        unsafe_allow_html=True,
-    )
-
-
 # ── Hero ──────────────────────────────────────────────────────────────────────
 
 st.markdown(
@@ -450,6 +452,22 @@ st.markdown(
     '</div>',
     unsafe_allow_html=True,
 )
+
+
+# ── Inline Filters (minimal pill selects) ─────────────────────────────────────
+
+semesters = get_syllabus_semesters()
+sem_options = ["All Semesters"] + [f"Semester {s}" for s in semesters]
+subjects_all = get_all_subjects()
+
+col1, col2 = st.columns(2)
+with col1:
+    selected_sem = st.selectbox("Semester", options=sem_options, index=0, label_visibility="collapsed")
+    selected_sem_num = int(selected_sem.split()[-1]) if selected_sem != "All Semesters" else None
+with col2:
+    subjects = get_subjects_for_semester(selected_sem_num) if selected_sem_num else subjects_all
+    subj_options = ["All Subjects"] + subjects
+    selected_subject = st.selectbox("Subject", options=subj_options, index=0, label_visibility="collapsed")
 
 
 # ── Chat History ──────────────────────────────────────────────────────────────
@@ -504,19 +522,9 @@ if prompt := st.chat_input("What would you like to understand?"):
     if final_sources:
         st.session_state.sources_map[idx] = final_sources
 
-# ── Footer Trademark ──────────────────────────────────────────────────────────
+# ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div style="
-    text-align: center;
-    padding: 2rem 0 1rem;
-    margin-top: 2rem;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.72rem;
-    color: #9CA3AF;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-">
-    built by <a href="https://github.com/rishiiicreates" target="_blank"
-    style="color: #FF4D00; text-decoration: none; font-weight: 700;">rishiicreates</a>
+<div class="site-footer">
+    built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends
 </div>
 """, unsafe_allow_html=True)
