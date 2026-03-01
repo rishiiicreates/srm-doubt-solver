@@ -504,3 +504,20 @@ if prompt := st.chat_input("What would you like to understand?"):
     st.session_state.messages.append({"role": "assistant", "content": full_response})
     if final_sources:
         st.session_state.sources_map[idx] = final_sources
+
+# ── Footer Trademark ──────────────────────────────────────────────────────────
+st.markdown("""
+<div style="
+    text-align: center;
+    padding: 2rem 0 1rem;
+    margin-top: 2rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.72rem;
+    color: #9CA3AF;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+">
+    built by <a href="https://github.com/rishiiicreates" target="_blank"
+    style="color: #FF4D00; text-decoration: none; font-weight: 700;">rishiicreates</a>
+</div>
+""", unsafe_allow_html=True)
