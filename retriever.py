@@ -170,13 +170,12 @@ class SyllabusRetriever:
         # Process results
         chunks = self._process_results(results, threshold)
 
-        # Determine refusal
-        should_refuse = len(chunks) == 0
-
+        # Never refuse academic queries — let the LLM answer
+        # even if no syllabus match is found
         return RetrievalResult(
             chunks=chunks,
             query=query,
-            should_refuse=should_refuse,
+            should_refuse=False,
         )
 
     def _build_filter(

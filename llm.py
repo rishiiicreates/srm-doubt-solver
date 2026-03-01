@@ -138,13 +138,25 @@ def build_prompt(query: str, context: str) -> str:
     The system prompt is HARDCODED and injected here — it cannot be
     overridden or manipulated by user input.
     """
+    if context.strip():
+        context_section = (
+            "=== OFFICIAL SYLLABUS CONTEXT ===\n\n"
+            f"{context}\n\n"
+            "=== END OF CONTEXT ==="
+        )
+    else:
+        context_section = (
+            "=== OFFICIAL SYLLABUS CONTEXT ===\n\n"
+            "No matching syllabus topics were found for this question. "
+            "The topic may not be covered in the current SRM syllabus.\n\n"
+            "=== END OF CONTEXT ==="
+        )
+
     prompt = (
         f"{SYSTEM_PROMPT}\n\n"
-        "=== OFFICIAL SYLLABUS CONTEXT ===\n\n"
-        f"{context}\n\n"
-        "=== END OF CONTEXT ===\n\n"
+        f"{context_section}\n\n"
         f"Student Question: {query}\n\n"
-        "Answer (cite slide numbers, subject, unit, and semester for every claim):"
+        "Answer:"
     )
     return prompt
 
