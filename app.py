@@ -318,7 +318,7 @@ nav_component_html = f"""
     // ── Create panel ──
     var panel = doc.createElement('div');
     panel.id = 'navPanel';
-    panel.style.cssText = "position:fixed; top:0; right:-320px; width:300px; height:100vh; background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:-6px 0 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; overflow-y:auto; font-family:Space Grotesk,sans-serif;";
+    panel.style.cssText = "position:fixed; top:0; right:0; transform:translateX(100%); width:40vw; min-width:320px; max-width:800px; height:100vh; background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:-6px 0 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; overflow-y:auto; font-family:Space Grotesk,sans-serif;";
 
     panel.innerHTML = '<button id="navCloseBtn" style="position:absolute; top:1.2rem; right:1.2rem; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:white; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;">✕</button>'
         + '<div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:2px; line-height:1.1;">Doubt<br>Solver.</div>'
@@ -343,12 +343,12 @@ nav_component_html = f"""
 
     // ── Event listeners ──
     function openNav() {{
-        panel.style.right = '0';
+        panel.style.transform = 'translateX(0)';
         overlay.style.opacity = '1';
         overlay.style.pointerEvents = 'all';
     }}
     function closeNav() {{
-        panel.style.right = '-320px';
+        panel.style.transform = 'translateX(100%)';
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
     }}
