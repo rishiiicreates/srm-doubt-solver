@@ -53,19 +53,13 @@ st.markdown("""
     }
 
     /* ─── Sidebar: Orange Nav Panel (RIGHT SIDE) ─── */
-    /* Move sidebar to right */
+    /* Move sidebar to right by reversing flex order */
     [data-testid="stAppViewContainer"] {
-        direction: rtl !important;
-    }
-    [data-testid="stAppViewContainer"] > * {
-        direction: ltr !important;
+        flex-direction: row-reverse !important;
     }
     section[data-testid="stSidebar"] {
-        direction: ltr !important;
         background: #FF4D00 !important;
         width: 280px !important;
-        left: auto !important;
-        right: 0 !important;
     }
     section[data-testid="stSidebar"] > div {
         background: #FF4D00 !important;
@@ -360,6 +354,15 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+    # About link
+    st.markdown(
+        '<a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank" '
+        'style="display:block; padding:0.7rem 0; font-size:0.8rem; font-weight:700; '
+        'color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; '
+        'text-decoration:none;">About · Know more about us</a>',
+        unsafe_allow_html=True,
+    )
+
     # Footer / credits
     st.markdown("---")
     st.markdown(
@@ -478,6 +481,5 @@ if prompt := st.chat_input("What would you like to understand?"):
 st.markdown("""
 <div class="site-footer">
     <span>built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends</span>
-    <a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank">portfolio ↗</a>
 </div>
 """, unsafe_allow_html=True)
