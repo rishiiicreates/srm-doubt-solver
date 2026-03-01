@@ -52,10 +52,20 @@ st.markdown("""
         font-family: 'Inter', -apple-system, sans-serif;
     }
 
-    /* ─── Sidebar: Orange Nav Panel ─── */
+    /* ─── Sidebar: Orange Nav Panel (RIGHT SIDE) ─── */
+    /* Move sidebar to right */
+    [data-testid="stAppViewContainer"] {
+        direction: rtl !important;
+    }
+    [data-testid="stAppViewContainer"] > * {
+        direction: ltr !important;
+    }
     section[data-testid="stSidebar"] {
+        direction: ltr !important;
         background: #FF4D00 !important;
         width: 280px !important;
+        left: auto !important;
+        right: 0 !important;
     }
     section[data-testid="stSidebar"] > div {
         background: #FF4D00 !important;
@@ -87,10 +97,20 @@ st.markdown("""
     section[data-testid="stSidebar"] hr {
         border-color: rgba(255,255,255,0.2) !important;
     }
-    /* The sidebar collapse button */
+    /* Sidebar collapse/expand button — move to right, style as MENU */
     [data-testid="stSidebarCollapsedControl"],
     [data-testid="collapsedControl"] {
-        color: var(--orange) !important;
+        left: auto !important;
+        right: 0.5rem !important;
+    }
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="collapsedControl"] button,
+    button[kind="header"] {
+        background: #FF4D00 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.4rem 0.6rem !important;
     }
 
     /* ─── Animations ─── */
