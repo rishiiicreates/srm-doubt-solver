@@ -231,6 +231,7 @@ def generate_response(
             "semester": chunk.semester,
             "source_filename": chunk.source_filename,
             "citation": chunk.citation,
+            "similarity_score": chunk.similarity_score,
         }
         for chunk in retrieval_result.chunks
     ]
@@ -297,6 +298,7 @@ def generate_response_stream(
             "semester": chunk.semester,
             "source_filename": chunk.source_filename,
             "citation": chunk.citation,
+            "similarity_score": chunk.similarity_score,
         }
         for chunk in retrieval_result.chunks
     ]

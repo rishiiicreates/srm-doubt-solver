@@ -368,9 +368,14 @@ def format_sources_html(sources: list[dict]) -> str:
             parts.append(f"Sem {src['semester']}")
         unit_name = src.get("unit_name", "")
         if unit_name:
-            parts.append(f"{unit_name}")
+            parts.append(f"Unit: {unit_name}")
         elif src.get("unit_number"):
             parts.append(f"Unit {src['unit_number']}")
+        # Show match confidence
+        score = src.get("similarity_score", 0)
+        if score:
+            pct = int(score * 100)
+            parts.append(f'<span style="opacity:0.5;font-size:0.7rem">{pct}% match</span>')
         html += f'<div class="src-item">{" · ".join(parts)}</div>'
     html += "</div>"
     return html
