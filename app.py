@@ -52,55 +52,16 @@ st.markdown("""
         font-family: 'Inter', -apple-system, sans-serif;
     }
 
-    /* ─── Sidebar: Orange Nav Panel ─── */
-    section[data-testid="stSidebar"] {
-        background: #FF4D00 !important;
-    }
-    section[data-testid="stSidebar"] > div {
-        background: #FF4D00 !important;
-        padding: 1.2rem !important;
-    }
-    section[data-testid="stSidebar"] .stMarkdown,
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] p {
-        color: white !important;
-        font-family: 'Space Grotesk', sans-serif !important;
-    }
-    section[data-testid="stSidebar"] .stSelectbox label {
-        font-size: 0.65rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 2px !important;
-        color: rgba(255,255,255,0.7) !important;
-    }
-    section[data-testid="stSidebar"] .stSelectbox > div > div {
-        background: rgba(255,255,255,0.12) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        border-radius: 8px !important;
-        color: white !important;
-    }
-    section[data-testid="stSidebar"] .stSelectbox svg {
-        fill: white !important;
-    }
-    section[data-testid="stSidebar"] hr {
-        border-color: rgba(255,255,255,0.2) !important;
-    }
-    /* Style the sidebar toggle button */
-    button[kind="header"],
-    button[kind="headerNoPadding"] {
-        background: #FF4D00 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-    }
-    /* Hide the Streamlit sidebar collapse icon text */
-    section[data-testid="stSidebar"] button[kind="header"] span,
-    section[data-testid="stSidebar"] button[kind="headerNoPadding"] span {
-        font-size: 0 !important;
-    }
-    [data-testid="stSidebarCollapseButton"] {
-        padding-top: 0 !important;
+    /* ─── Completely hide sidebar ─── */
+    section[data-testid="stSidebar"],
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    button[kind="header"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
     }
 
     /* ─── Animations ─── */
@@ -243,8 +204,10 @@ st.markdown("""
        FOOTER
        ═══════════════════════════════════════════════ */
     .site-footer {
-        text-align: center;
-        padding: 2.5rem 0 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2.5rem 2rem 1.2rem;
         margin-top: 2rem;
         font-family: 'Space Grotesk', sans-serif;
         font-size: 0.72rem;
@@ -257,6 +220,7 @@ st.markdown("""
         text-decoration: none;
         font-weight: 700;
     }
+    .site-footer a:hover { opacity: 0.8; }
 
     /* ─── Hide defaults ─── */
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
@@ -271,34 +235,6 @@ st.markdown("""
 # ── Particles ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="particles"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div></div>', unsafe_allow_html=True)
 
-# ── Right-side MENU toggle button (triggers native sidebar) ───────────────────
-import streamlit.components.v1 as components
-components.html("""
-<html><body style="margin:0;padding:0;overflow:hidden;background:transparent;">
-<script>
-(function() {
-    var doc = window.parent.document;
-    if (doc.getElementById('rightMenuBtn')) return;
-    var btn = doc.createElement('button');
-    btn.id = 'rightMenuBtn';
-    btn.innerHTML = 'MENU';
-    btn.style.cssText = "position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:9999; width:36px; height:80px; background:#FF4D00; border:none; border-radius:8px 0 0 8px; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease; writing-mode:vertical-rl; text-orientation:mixed; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;";
-    btn.onmouseenter = function() { this.style.width='42px'; this.style.background='#E64400'; };
-    btn.onmouseleave = function() { this.style.width='36px'; this.style.background='#FF4D00'; };
-    btn.onclick = function() {
-        var toggle = doc.querySelector('[data-testid="stSidebarCollapsedControl"] button')
-            || doc.querySelector('[data-testid="collapsedControl"] button')
-            || doc.querySelector('button[data-testid="stExpandSidebarButton"]')
-            || doc.querySelector('button[kind="headerNoPadding"]')
-            || doc.querySelector('button[kind="header"]');
-        if (toggle) toggle.click();
-    };
-    doc.body.appendChild(btn);
-})();
-</script>
-</body></html>
-""", height=0, scrolling=False)
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -312,7 +248,7 @@ def get_all_subjects() -> list[str]:
     return sorted(SYLLABUS_KB.keys())
 
 
-# ── Build filter options ──────────────────────────────────────────────────────
+# ── Build filter options for nav panel ────────────────────────────────────────
 
 from retriever import get_retriever
 try:
@@ -324,81 +260,146 @@ except Exception:
 total_subjects_count = len(SYLLABUS_KB)
 semesters = get_syllabus_semesters()
 total_semesters = len(semesters)
+all_subjects = get_all_subjects()
 
+# Build semester <option> tags
+current_sem = st.query_params.get("sem", "")
+current_subj = st.query_params.get("subj", "")
 
-# ── Sidebar: Orange Nav Panel with Native Streamlit Widgets ───────────────────
+sem_options_html = '<option value="">All Semesters</option>'
+for s in semesters:
+    sel = ' selected' if str(s) == current_sem else ''
+    sem_options_html += f'<option value="{s}"{sel}>Semester {s}</option>'
 
-with st.sidebar:
-    # Branding
-    st.markdown(
-        '<div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; '
-        'letter-spacing:2px; line-height:1.1;">Doubt<br>Solver.</div>'
-        '<div style="font-size:0.6rem; color:rgba(255,255,255,0.55); text-transform:uppercase; '
-        'letter-spacing:4px; margin-top:0.3rem;">AI Study Companion</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown("---")
+# Build subject options based on selected semester
+if current_sem:
+    subjects_list = get_subjects_for_semester(int(current_sem))
+else:
+    subjects_list = all_subjects
 
-    # Semester selector (native Streamlit widget)
-    sem_options = ["All Semesters"] + [f"Semester {s}" for s in semesters]
-    selected_sem_label = st.selectbox("Semester", sem_options, key="sidebar_semester")
+subj_options_html = '<option value="">All Subjects</option>'
+for subj in subjects_list:
+    sel = ' selected' if subj == current_subj else ''
+    subj_options_html += f'<option value="{subj}"{sel}>{subj}</option>'
 
-    # Parse semester number
-    if selected_sem_label == "All Semesters":
-        selected_sem_num = None
-    else:
-        selected_sem_num = int(selected_sem_label.split()[-1])
+# Build semester->subjects JSON map for dynamic JS filtering
+import json as _json
+sem_subjects_map = {}
+for s in semesters:
+    sem_subjects_map[str(s)] = get_subjects_for_semester(s)
+sem_subjects_map[""] = all_subjects  # "All Semesters" key
+sem_subjects_json = _json.dumps(sem_subjects_map)
 
-    # Dynamic subject list based on semester
-    if selected_sem_num:
-        subjects_list = get_subjects_for_semester(selected_sem_num)
-    else:
-        subjects_list = get_all_subjects()
+# Inject nav panel via components.html (st.markdown strips <script> tags!)
+import streamlit.components.v1 as components
 
-    subj_options = ["All Subjects"] + subjects_list
-    selected_subj_label = st.selectbox("Subject", subj_options, key="sidebar_subject")
+nav_component_html = f"""
+<html><body style="margin:0;padding:0;overflow:hidden;background:transparent;">
+<script>
+(function() {{
+    var doc = window.parent.document;
 
-    # Parse subject
-    if selected_subj_label == "All Subjects":
-        selected_subject = None
-    else:
-        selected_subject = selected_subj_label
+    // Prevent duplicate creation on Streamlit reruns
+    if (doc.getElementById('navPanel')) return;
 
-    st.markdown("---")
+    // ── Create toggle button ──
+    var toggle = doc.createElement('button');
+    toggle.id = 'navToggleBtn';
+    toggle.innerHTML = 'MENU';
+    toggle.style.cssText = "position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:9999; width:36px; height:80px; background:#FF4D00; border:none; border-radius:8px 0 0 8px; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease; writing-mode:vertical-rl; text-orientation:mixed; font-family:Space Grotesk,sans-serif; font-weight:700; font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;";
+    toggle.onmouseenter = function() {{ this.style.width='42px'; this.style.background='#E64400'; }};
+    toggle.onmouseleave = function() {{ this.style.width='36px'; this.style.background='#FF4D00'; }};
 
-    # Status badge
-    st.markdown(
-        f'<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); '
-        f'border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; '
-        f'font-size:0.7rem; font-weight:600; color:white;">'
-        f'<span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>'
-        f'{status_text}</div>'
-        f'<p style="font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; '
-        f'letter-spacing:1.5px; margin-top:0.5rem;">{total_subjects_count} subjects · {total_semesters} semesters</p>',
-        unsafe_allow_html=True,
-    )
+    // ── Create overlay ──
+    var overlay = doc.createElement('div');
+    overlay.id = 'navOverlay';
+    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); backdrop-filter:blur(3px); z-index:9998; opacity:0; pointer-events:none; transition:opacity 0.3s ease;";
 
-    # About link
-    st.markdown(
-        '<a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank" '
-        'style="display:block; padding:0.7rem 0; font-size:0.8rem; font-weight:700; '
-        'color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; '
-        'text-decoration:none;">About · Know more about us</a>',
-        unsafe_allow_html=True,
-    )
+    // ── Create panel ──
+    var panel = doc.createElement('div');
+    panel.id = 'navPanel';
+    panel.style.cssText = "position:fixed; top:0; right:-320px; width:300px; height:100vh; background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:-6px 0 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; overflow-y:auto; font-family:Space Grotesk,sans-serif;";
 
-    # Footer / credits
-    st.markdown("---")
-    st.markdown(
-        '<div style="text-align:center;">'
-        '<a href="https://github.com/rishiiicreates" target="_blank" '
-        'style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; '
-        'text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a></div>',
-        unsafe_allow_html=True,
-    )
+    panel.innerHTML = '<button id="navCloseBtn" style="position:absolute; top:1.2rem; right:1.2rem; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:white; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;">✕</button>'
+        + '<div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:2px; line-height:1.1;">Doubt<br>Solver.</div>'
+        + '<div style="font-family:Inter,sans-serif; font-size:0.6rem; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:4px; margin-top:0.3rem;">AI Study Companion</div>'
+        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
+        + '<span style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Home</span>'
+        + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Chat</span>'
+        + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Syllabus</span>'
+        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
+        + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Semester</label><select id="navSemSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{sem_options_html}</select></div>'
+        + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Subject</label><select id="navSubjSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{subj_options_html}</select></div>'
+        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
+        + '<span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;"><span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>{status_text}</span>'
+        + '<p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">{total_subjects_count} subjects · {total_semesters} semesters</p>'
+        + '<div style="margin-top:auto; text-align:center;"><hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;"><a href="https://github.com/rishiiicreates" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a></div>';
 
-# Debug: Print active filters to Streamlit server log
-print(f"  🔍 Active filters — semester: {selected_sem_num}, subject: {selected_subject}")
+    // ── Add to parent page ──
+    doc.body.appendChild(toggle);
+    doc.body.appendChild(overlay);
+    doc.body.appendChild(panel);
+
+    // ── Event listeners ──
+    function openNav() {{
+        panel.style.right = '0';
+        overlay.style.opacity = '1';
+        overlay.style.pointerEvents = 'all';
+    }}
+    function closeNav() {{
+        panel.style.right = '-320px';
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+    }}
+
+    toggle.addEventListener('click', openNav);
+    overlay.addEventListener('click', closeNav);
+    doc.getElementById('navCloseBtn').addEventListener('click', closeNav);
+
+    // ── Semester -> Subjects map for dynamic filtering ──
+    var semSubjects = {sem_subjects_json};
+
+    // ── Filter select change handlers ──
+    function navigateWithFilters(sem, subj) {{
+        var url = new URL(window.parent.location.href);
+        if (sem) url.searchParams.set('sem', sem);
+        else url.searchParams.delete('sem');
+        if (subj) url.searchParams.set('subj', subj);
+        else url.searchParams.delete('subj');
+        window.parent.location.href = url.toString();
+    }}
+
+    // When semester changes: update subject dropdown options dynamically, then navigate
+    doc.getElementById('navSemSelect').addEventListener('change', function() {{
+        var sem = this.value;
+        var subjSelect = doc.getElementById('navSubjSelect');
+        var subjects = semSubjects[sem] || semSubjects[''];
+
+        // Rebuild subject dropdown
+        subjSelect.innerHTML = '<option value="">All Subjects</option>';
+        subjects.forEach(function(s) {{
+            var opt = doc.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            subjSelect.appendChild(opt);
+        }});
+
+        // Navigate with new semester, clear subject
+        navigateWithFilters(sem, '');
+    }});
+
+    // When subject changes: navigate immediately
+    doc.getElementById('navSubjSelect').addEventListener('change', function() {{
+        var sem = doc.getElementById('navSemSelect').value;
+        var subj = this.value;
+        navigateWithFilters(sem, subj);
+    }});
+}})();
+</script>
+</body></html>
+"""
+
+components.html(nav_component_html, height=0, scrolling=False)
 
 
 def format_sources_html(sources: list[dict]) -> str:
@@ -428,6 +429,29 @@ def format_sources_html(sources: list[dict]) -> str:
         html += f'<div class="src-item">{" · ".join(parts)}</div>'
     html += "</div>"
     return html
+
+
+# ── Read filter values — session_state is authoritative, query params seed it ─
+
+# Sync query-param → session_state on page load (JS nav panel sets URL params)
+_qp_sem = st.query_params.get("sem", "")
+_qp_subj = st.query_params.get("subj", "")
+
+if _qp_sem:
+    st.session_state["filter_semester"] = int(_qp_sem)
+elif "filter_semester" not in st.session_state:
+    st.session_state["filter_semester"] = None
+
+if _qp_subj:
+    st.session_state["filter_subject"] = _qp_subj
+elif "filter_subject" not in st.session_state:
+    st.session_state["filter_subject"] = None
+
+selected_sem_num = st.session_state["filter_semester"]
+selected_subject = st.session_state["filter_subject"]
+
+# Debug: Print active filters to Streamlit server log
+print(f"  🔍 Active filters — semester: {selected_sem_num}, subject: {selected_subject}")
 
 
 # ── Session State ─────────────────────────────────────────────────────────────
@@ -505,5 +529,6 @@ if prompt := st.chat_input("What would you like to understand?"):
 st.markdown("""
 <div class="site-footer">
     <span>built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends</span>
+    <a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank">portfolio ↗</a>
 </div>
 """, unsafe_allow_html=True)
