@@ -22,7 +22,7 @@ st.set_page_config(
     page_title="Doubt Solver",
     page_icon="🎓",
     layout="centered",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
@@ -87,11 +87,20 @@ st.markdown("""
         border-color: rgba(255,255,255,0.2) !important;
     }
     /* Style the sidebar toggle button */
-    button[kind="header"] {
+    button[kind="header"],
+    button[kind="headerNoPadding"] {
         background: #FF4D00 !important;
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
+    }
+    /* Hide the Streamlit sidebar collapse icon text */
+    section[data-testid="stSidebar"] button[kind="header"] span,
+    section[data-testid="stSidebar"] button[kind="headerNoPadding"] span {
+        font-size: 0 !important;
+    }
+    [data-testid="stSidebarCollapseButton"] {
+        padding-top: 0 !important;
     }
 
     /* ─── Animations ─── */
