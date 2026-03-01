@@ -428,10 +428,27 @@ def format_sources_html(sources: list[dict]) -> str:
     return html
 
 
-# ── Read filter values from query params (set by nav panel JS) ────────────────
+# ── Read filter values — session_state is authoritative, query params seed it ─
 
-selected_sem_num = int(current_sem) if current_sem else None
-selected_subject = current_subj if current_subj else None
+# Sync query-param → session_state on page load (JS nav panel sets URL params)
+_qp_sem = st.query_params.get("sem", "")
+_qp_subj = st.query_params.get("subj", "")
+
+if _qp_sem:
+    st.session_state["filter_semester"] = int(_qp_sem)
+elif "filter_semester" not in st.session_state:
+    st.session_state["filter_semester"] = None
+
+if _qp_subj:
+    st.session_state["filter_subject"] = _qp_subj
+elif "filter_subject" not in st.session_state:
+    st.session_state["filter_subject"] = None
+
+selected_sem_num = st.session_state["filter_semester"]
+selected_subject = st.session_state["filter_subject"]
+
+# Debug: Print active filters to Streamlit server log
+print(f"  🔍 Active filters — semester: {selected_sem_num}, subject: {selected_subject}")
 
 
 # ── Session State ─────────────────────────────────────────────────────────────
@@ -473,6 +490,7 @@ if prompt := st.chat_input("What would you like to understand?"):
     with st.chat_message("assistant"):
         semester_filter = selected_sem_num
         subject_filter = selected_subject
+        print(f"  🚀 Generating response — query='{prompt}', sem={semester_filter}, subj={subject_filter}")
 
         with st.spinner("Thinking..."):
             resp_ph = st.empty()
