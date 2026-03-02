@@ -9,12 +9,13 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import chromadb
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama import OllamaEmbeddings
 
 from config import (
     CHROMA_COLLECTION_NAME,
     CHROMA_PERSIST_DIR,
     EMBEDDING_MODEL,
+    OLLAMA_BASE_URL,
     REFUSAL_MESSAGE,
     SIMILARITY_THRESHOLD,
     TOP_K,
@@ -98,9 +99,9 @@ class SyllabusRetriever:
             name=CHROMA_COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
         )
-        print(f"Initializing Retriever using ChromaDB at {CHROMA_PERSIST_DIR}")
-        self.embeddings_model = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL
+        self._embeddings = OllamaEmbeddings(
+            model=EMBEDDING_MODEL,
+            base_url=OLLAMA_BASE_URL,
         )
 
     @property
