@@ -44,9 +44,10 @@ def create_llm() -> OllamaLLM:
 _cache = diskcache.Cache(CACHE_DIR)
 
 
-def _cache_key(query: str, semester: Optional[int], subject: Optional[str]) -> str:
-    """Generate a deterministic cache key from query parameters."""
-    raw = f"{query}|{semester or ''}|{subject or ''}"
+def _cache_key(query: str, semester: Optional[int], subject: Optional[str], chat_history: Optional[list[dict]] = None) -> str:
+    """Generate a deterministic cache key from query parameters and history."""
+    history_str = str(chat_history) if chat_history else ""
+    raw = f"{query}|{semester or ''}|{subject or ''}|{history_str}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -54,9 +55,10 @@ def get_cached_response(
     query: str,
     semester: Optional[int] = None,
     subject: Optional[str] = None,
+    chat_history: Optional[list[dict]] = None,
 ) -> Optional[dict]:
     """Look up a cached response. Returns None on cache miss."""
-    key = _cache_key(query, semester, subject)
+    key = _cache_key(query, semester, subject, chat_history)
     result = _cache.get(key)
     return result if result else None
 
@@ -66,9 +68,10 @@ def set_cached_response(
     semester: Optional[int],
     subject: Optional[str],
     response: dict,
+    chat_history: Optional[list[dict]] = None,
 ) -> None:
     """Store a response in the cache with TTL."""
-    key = _cache_key(query, semester, subject)
+    key = _cache_key(query, semester, subject, chat_history)
     _cache.set(key, response, expire=CACHE_TTL_SECONDS)
 
 
@@ -79,15 +82,16 @@ def rewrite_query(
     raw_query: str,
     subject: Optional[str] = None,
     semester: Optional[int] = None,
+    chat_history: Optional[list[dict]] = None,
 ) -> str:
     """
     Rewrite an ambiguous student question into a clean retrieval query.
 
     Uses a lightweight LLM call to rephrase colloquial questions into
-    precise academic search queries. When a subject/semester filter is
-    active, incorporates that context.
+    precise academic search queries. When chat history is provided,
+    it resolves pronouns and context references.
 
-    Falls back to the original query (with subject prepended) if rewriting fails.
+    Falls back to the original query if rewriting fails.
     """
     # Handle generic/vague queries when a subject is selected
     generic_patterns = [
@@ -118,14 +122,25 @@ def rewrite_query(
     elif subject:
         context_hint = f"The student is studying '{subject}'. "
 
+    history_text = ""
+    if chat_history:
+        history_text = "Recent conversation context:\n"
+        for msg in chat_history[-3:]:  # Last 3 messages for context
+            role = "Student" if msg["role"] == "user" else "AI"
+            history_text += f"{role}: {msg['content']}\n"
+        history_text += "\n"
+
     rewrite_prompt = (
         "You are a search query optimizer for a college syllabus database. "
         f"{context_hint}"
         "Rewrite the following student question into a precise, concise academic "
-        "search query. Keep subject names, unit numbers, and technical terms. "
+        "search query. If the student question contains pronouns like 'it', 'this', or refers "
+        "to a previous topic, use the conversation context to resolve what they mean in the rewritten query. "
+        "Keep subject names, unit numbers, and technical terms. "
         "Remove filler words, slang, and ambiguity. "
         "Return ONLY the rewritten query, nothing else. "
         "Do NOT use placeholders like [Subject Name] — use actual terms.\n\n"
+        f"{history_text}"
         f"Student question: {raw_query}\n\n"
         "Rewritten query:"
     )
@@ -174,6 +189,7 @@ def build_prompt(
     context: str,
     semester: Optional[int] = None,
     subject: Optional[str] = None,
+    chat_history: Optional[list[dict]] = None,
 ) -> str:
     """
     Build the full prompt with system instructions and context.
@@ -214,9 +230,18 @@ def build_prompt(
             "=== END OF CONTEXT ==="
         )
 
+    history_section = ""
+    if chat_history:
+        history_section = "=== RECENT CONVERSATION HISTORY ===\n\n"
+        for msg in chat_history:
+            role = "Student" if msg["role"] == "user" else "AI"
+            history_section += f"{role}: {msg['content']}\n\n"
+        history_section += "=== END OF HISTORY ===\n\n"
+
     prompt = (
         f"{SYSTEM_PROMPT}{filter_note}\n\n"
         f"{context_section}\n\n"
+        f"{history_section}"
         f"Student Question: {query}\n\n"
         "Answer:"
     )
@@ -231,6 +256,7 @@ def generate_response(
     semester: Optional[int] = None,
     subject: Optional[str] = None,
     use_cache: bool = True,
+    chat_history: Optional[list[dict]] = None,
 ) -> dict:
     """
     Full RAG pipeline: rewrite query -> retrieve context -> generate answer.
@@ -240,16 +266,17 @@ def generate_response(
         semester: Optional semester filter.
         subject: Optional subject filter.
         use_cache: Whether to check/use the response cache.
+        chat_history: List of previous Message dicts for conversational memory.
 
     Returns:
         Dict with keys: answer, sources, rewritten_query, was_cached, should_refuse
     """
     # Step 1: Rewrite query for better retrieval
-    rewritten_query = rewrite_query(query, subject=subject, semester=semester)
+    rewritten_query = rewrite_query(query, subject=subject, semester=semester, chat_history=chat_history)
 
     # Step 2: Check cache
     if use_cache:
-        cached = get_cached_response(rewritten_query, semester, subject)
+        cached = get_cached_response(rewritten_query, semester, subject, chat_history=chat_history)
         if cached:
             cached["was_cached"] = True
             return cached
@@ -274,7 +301,7 @@ def generate_response(
 
     # Step 5: Build prompt with context
     context = retrieval_result.context_text
-    prompt = build_prompt(query, context, semester=semester, subject=subject)
+    prompt = build_prompt(query, context, semester=semester, subject=subject, chat_history=chat_history)
 
     # Step 6: Generate response
     llm = create_llm()
@@ -308,7 +335,7 @@ def generate_response(
 
     # Step 8: Cache the result
     if use_cache:
-        set_cached_response(rewritten_query, semester, subject, result)
+        set_cached_response(rewritten_query, semester, subject, result, chat_history=chat_history)
 
     return result
 
@@ -317,6 +344,7 @@ def generate_response_stream(
     query: str,
     semester: Optional[int] = None,
     subject: Optional[str] = None,
+    chat_history: Optional[list[dict]] = None,
 ) -> Generator[dict, None, None]:
     """
     Streaming version of generate_response.
@@ -329,10 +357,10 @@ def generate_response_stream(
       - answer: full answer text (for type="done")
     """
     # Step 1: Rewrite query
-    rewritten_query = rewrite_query(query, subject=subject, semester=semester)
+    rewritten_query = rewrite_query(query, subject=subject, semester=semester, chat_history=chat_history)
 
     # Step 2: Check cache
-    cached = get_cached_response(rewritten_query, semester, subject)
+    cached = get_cached_response(rewritten_query, semester, subject, chat_history=chat_history)
     if cached:
         cached["was_cached"] = True
         yield {"type": "done", "content": cached["answer"], "sources": cached.get("sources", []), "was_cached": True}
@@ -368,7 +396,7 @@ def generate_response_stream(
 
     # Step 6: Build prompt and stream response
     context = retrieval_result.context_text
-    prompt = build_prompt(query, context, semester=semester, subject=subject)
+    prompt = build_prompt(query, context, semester=semester, subject=subject, chat_history=chat_history)
     llm = create_llm()
 
     full_answer = ""
@@ -389,6 +417,6 @@ def generate_response_stream(
         "was_cached": False,
         "should_refuse": False,
     }
-    set_cached_response(rewritten_query, semester, subject, result)
+    set_cached_response(rewritten_query, semester, subject, result, chat_history=chat_history)
 
     yield {"type": "done", "content": full_answer.strip(), "sources": sources, "was_cached": False}

@@ -206,10 +206,9 @@ st.markdown("""
     .site-footer {
         position: fixed;
         bottom: 8px;
-        left: 0;
-        width: 100vw;
+        right: 20px;
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         align-items: center;
         z-index: 100000;
         font-family: 'Space Grotesk', sans-serif;
@@ -272,77 +271,6 @@ semesters = get_syllabus_semesters()
 total_semesters = len(semesters)
 all_subjects = get_all_subjects()
 
-# Nav panel options removed as requested
-
-# Inject nav panel via components.html (st.markdown strips <script> tags!)
-import streamlit.components.v1 as components
-
-nav_component_html = f"""
-<html><body style="margin:0;padding:0;overflow:hidden;background:transparent;">
-<script>
-(function() {{
-    var doc = window.parent.document;
-
-    // Prevent duplicate creation on Streamlit reruns
-    if (doc.getElementById('navPanel')) return;
-
-    // ── Create toggle button ──
-    var toggle = doc.createElement('button');
-    toggle.id = 'navToggleBtn';
-    toggle.innerHTML = 'MENU';
-    toggle.style.cssText = "position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:9999; width:36px; height:80px; background:#FF4D00; border:none; border-radius:8px 0 0 8px; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:-2px 0 15px rgba(255,77,0,0.2); transition:all 0.3s ease; writing-mode:vertical-rl; text-orientation:mixed; font-family:Space Grotesk,sans-serif; font-weight:700; font-size:0.65rem; letter-spacing:3px; text-transform:uppercase;";
-    toggle.onmouseenter = function() {{ this.style.width='42px'; this.style.background='#E64400'; }};
-    toggle.onmouseleave = function() {{ this.style.width='36px'; this.style.background='#FF4D00'; }};
-
-    // ── Create overlay ──
-    var overlay = doc.createElement('div');
-    overlay.id = 'navOverlay';
-    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); backdrop-filter:blur(3px); z-index:9998; opacity:0; pointer-events:none; transition:opacity 0.3s ease;";
-
-    // ── Create panel ──
-    var panel = doc.createElement('div');
-    panel.id = 'navPanel';
-    panel.style.cssText = "position:fixed; top:0; right:0; transform:translateX(100%); width:40vw; min-width:320px; max-width:800px; height:100vh; background:#FF4D00; z-index:10000; padding:2.5rem 1.8rem; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); box-shadow:-6px 0 40px rgba(0,0,0,0.2); display:flex; flex-direction:column; overflow-y:auto; font-family:Space Grotesk,sans-serif;";
-
-    panel.innerHTML = '<button id="navCloseBtn" style="position:absolute; top:1.2rem; right:1.2rem; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:white; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;">✕</button>'
-        + '<div style="font-size:2rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:2px; line-height:1.1;">Doubt<br>Solver.</div>'
-        + '<div style="font-family:Inter,sans-serif; font-size:0.6rem; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:4px; margin-top:0.3rem;">AI Study Companion</div>'
-        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
-        + '<span style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Home</span>'
-        + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Chat</span>'
-        + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Syllabus</span>'
-        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
-        + '<span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;"><span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>{status_text}</span>'
-        + '<p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">{total_subjects_count} subjects · {total_semesters} semesters</p>'
-        + '<div style="margin-top:auto; text-align:center;"><hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;"><a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a></div>';
-
-    // ── Add to parent page ──
-    doc.body.appendChild(toggle);
-    doc.body.appendChild(overlay);
-    doc.body.appendChild(panel);
-
-    // ── Event listeners ──
-    function openNav() {{
-        panel.style.transform = 'translateX(0)';
-        overlay.style.opacity = '1';
-        overlay.style.pointerEvents = 'all';
-    }}
-    function closeNav() {{
-        panel.style.transform = 'translateX(100%)';
-        overlay.style.opacity = '0';
-        overlay.style.pointerEvents = 'none';
-    }}
-
-    toggle.addEventListener('click', openNav);
-    overlay.addEventListener('click', closeNav);
-    doc.getElementById('navCloseBtn').addEventListener('click', closeNav);
-}})();
-</script>
-</body></html>
-"""
-
-components.html(nav_component_html, height=0, scrolling=False)
-
 
 def format_sources_html(sources: list[dict]) -> str:
     if not sources:
@@ -384,7 +312,7 @@ print(f"  🔍 Active filters — semester: {selected_sem_num}, subject: {select
 
 
 # ── Session State ─────────────────────────────────────────────────────────────
-
+# This must remain for initialization if it wasn't already caught above
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "sources_map" not in st.session_state:
@@ -424,13 +352,17 @@ if prompt := st.chat_input("What would you like to understand?"):
         subject_filter = selected_subject
         print(f"  🚀 Generating response — query='{prompt}', sem={semester_filter}, subj={subject_filter}")
 
+        # Pass the last 5 messages (excluding the current user prompt we just appended)
+        # to give the LLM conversational memory.
+        chat_context = st.session_state.messages[:-1][-5:]
+
         with st.spinner("Thinking..."):
             resp_ph = st.empty()
             src_ph = st.empty()
             full_response = ""
             final_sources = []
 
-            for chunk in generate_response_stream(prompt, semester_filter, subject_filter):
+            for chunk in generate_response_stream(prompt, semester_filter, subject_filter, chat_history=chat_context):
                 if chunk["type"] == "refusal":
                     full_response = chunk["content"]
                     resp_ph.markdown(full_response)
@@ -457,6 +389,6 @@ if prompt := st.chat_input("What would you like to understand?"):
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="site-footer">
-    <span>built by <a href="https://github.com/rishiiicreates" target="_blank">rishiicreates</a> and friends</span>
+    <a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank">@rishiicreates</a>
 </div>
 """, unsafe_allow_html=True)
