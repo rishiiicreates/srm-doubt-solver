@@ -10,10 +10,34 @@ Clean, minimal design with right-side floating nav panel.
 """
 
 import streamlit as st
+import hashlib
+from typing import Generator
+import time
 
-from config import REFUSAL_MESSAGE
+from config import REFUSAL_MESSAGE, CHROMA_PERSIST_DIR
+import os
+
+# --- Auto-Ingestion for Cloud Deployments ---
+def check_and_run_ingestion():
+    if "ingestion_done" not in st.session_state:
+        # Check if chroma db exists and is not empty
+        if not os.path.exists(CHROMA_PERSIST_DIR) or not os.listdir(CHROMA_PERSIST_DIR):
+            with st.spinner("First-time setup: Downloading and indexing syllabus data (this takes a few minutes)..."):
+                try:
+                    import ingest
+                    ingest.main()
+                    st.success("Successfully indexed syllabus data!")
+                    time.sleep(2)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to auto-ingest data: {e}")
+        st.session_state.ingestion_done = True
+
+check_and_run_ingestion()
+# --------------------------------------------
+
 from llm import generate_response_stream
-from generate_syllabus_kb import SYLLABUS_KB
+from retriever import SYLLABUS_KB
 
 
 # ── Page Configuration ────────────────────────────────────────────────────────
