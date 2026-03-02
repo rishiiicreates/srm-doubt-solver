@@ -37,7 +37,7 @@ check_and_run_ingestion()
 # --------------------------------------------
 
 from llm import generate_response_stream
-from retriever import SYLLABUS_KB
+from generate_syllabus_kb import SYLLABUS_KB
 
 
 # ── Page Configuration ────────────────────────────────────────────────────────
