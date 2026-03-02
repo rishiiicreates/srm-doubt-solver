@@ -25,7 +25,7 @@ def check_and_run_ingestion():
             with st.spinner("First-time setup: Downloading and indexing syllabus data (this takes a few minutes)..."):
                 try:
                     import ingest
-                    ingest.main()
+                    ingest.run_ingestion(skip_scrape=True)
                     st.success("Successfully indexed syllabus data!")
                     time.sleep(2)
                     st.rerun()
