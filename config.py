@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore", message=".*Pydantic V1.*Python 3.14.*")
 # ── Ollama ────────────────────────────────────────────────────────────────────
 OLLAMA_BASE_URL: str = "http://localhost:11434"
 LLM_MODEL: str = "llama3"
-EMBEDDING_MODEL: str = "nomic-embed-text"
+EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 CHROMA_PERSIST_DIR: str = os.path.join(os.path.dirname(__file__), "vectorstore")

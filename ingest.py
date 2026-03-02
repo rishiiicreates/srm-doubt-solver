@@ -18,7 +18,7 @@ from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 import chromadb
 
 from config import (
@@ -28,7 +28,6 @@ from config import (
     EMBEDDING_BATCH_SIZE,
     EMBEDDING_MODEL,
     MANIFEST_PATH,
-    OLLAMA_BASE_URL,
 )
 from utils.downloader import scrape_and_download, load_manifest, _md5
 from utils.metadata_extractor import extract_metadata_from_path, enrich_metadata
@@ -155,15 +154,14 @@ def load_and_tag_documents(ppt_files: list[str], manifest_data: dict | None = No
 # ── Embedding & Storage ──────────────────────────────────────────────────────
 
 
-def create_embeddings_model() -> OllamaEmbeddings:
-    """Create the Ollama embeddings model."""
-    return OllamaEmbeddings(
-        model=EMBEDDING_MODEL,
-        base_url=OLLAMA_BASE_URL,
+def create_embeddings_model() -> HuggingFaceEmbeddings:
+    """Create the HuggingFace embeddings model."""
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL
     )
 
 
-def store_in_chromadb(chunks: list[Document], embeddings_model: OllamaEmbeddings) -> None:
+def store_in_chromadb(chunks: list[Document], embeddings_model: HuggingFaceEmbeddings) -> None:
     """
     Generate embeddings in batches and store in ChromaDB.
 
