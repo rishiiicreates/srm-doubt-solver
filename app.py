@@ -204,23 +204,32 @@ st.markdown("""
        FOOTER
        ═══════════════════════════════════════════════ */
     .site-footer {
+        position: fixed;
+        bottom: 8px;
+        left: 0;
+        width: 100vw;
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        padding: 2.5rem 2rem 1.2rem;
-        margin-top: 2rem;
+        z-index: 100000;
         font-family: 'Space Grotesk', sans-serif;
-        font-size: 0.72rem;
+        font-size: 0.65rem;
         color: #9CA3AF;
         letter-spacing: 1.5px;
         text-transform: uppercase;
+        pointer-events: none;
     }
     .site-footer a {
         color: var(--orange);
         text-decoration: none;
         font-weight: 700;
+        pointer-events: auto;
     }
     .site-footer a:hover { opacity: 0.8; }
+
+    [data-testid="stBottomBlockContainer"] {
+        padding-bottom: 2rem !important;
+    }
 
     /* ─── Hide defaults & sync inputs ─── */
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
@@ -263,33 +272,7 @@ semesters = get_syllabus_semesters()
 total_semesters = len(semesters)
 all_subjects = get_all_subjects()
 
-# Build semester <option> tags
-current_sem = st.query_params.get("sem", "")
-current_subj = st.query_params.get("subj", "")
-
-sem_options_html = '<option value="">All Semesters</option>'
-for s in semesters:
-    sel = ' selected' if str(s) == current_sem else ''
-    sem_options_html += f'<option value="{s}"{sel}>Semester {s}</option>'
-
-# Build subject options based on selected semester
-if current_sem:
-    subjects_list = get_subjects_for_semester(int(current_sem))
-else:
-    subjects_list = all_subjects
-
-subj_options_html = '<option value="">All Subjects</option>'
-for subj in subjects_list:
-    sel = ' selected' if subj == current_subj else ''
-    subj_options_html += f'<option value="{subj}"{sel}>{subj}</option>'
-
-# Build semester->subjects JSON map for dynamic JS filtering
-import json as _json
-sem_subjects_map = {}
-for s in semesters:
-    sem_subjects_map[str(s)] = get_subjects_for_semester(s)
-sem_subjects_map[""] = all_subjects  # "All Semesters" key
-sem_subjects_json = _json.dumps(sem_subjects_map)
+# Nav panel options removed as requested
 
 # Inject nav panel via components.html (st.markdown strips <script> tags!)
 import streamlit.components.v1 as components
@@ -328,14 +311,10 @@ nav_component_html = f"""
         + '<span style="font-size:0.8rem; font-weight:700; color:white; text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Home</span>'
         + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Chat</span>'
         + '<span style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0;">Syllabus</span>'
-        + '<a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank" style="font-size:0.8rem; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:3px; display:block; padding:0.7rem 0; text-decoration:none;">About: Know more about us</a>'
-        + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
-        + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Semester</label><select id="navSemSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{sem_options_html}</select></div>'
-        + '<div style="margin-bottom:0.8rem;"><label style="font-family:Space Grotesk,sans-serif; font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:2px; display:block; margin-bottom:0.3rem;">Subject</label><select id="navSubjSelect" style="width:100%; padding:0.5rem 0.7rem; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; font-family:Inter,sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">{subj_options_html}</select></div>'
         + '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;">'
         + '<span style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:50px; padding:0.4rem 1rem; font-family:Inter,sans-serif; font-size:0.7rem; font-weight:600; color:white;"><span style="width:6px; height:6px; background:#4ade80; border-radius:50%; display:inline-block;"></span>{status_text}</span>'
         + '<p style="font-family:Inter,sans-serif; font-size:0.62rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.5px; margin-top:0.5rem;">{total_subjects_count} subjects · {total_semesters} semesters</p>'
-        + '<div style="margin-top:auto; text-align:center;"><hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;"><a href="https://github.com/rishiiicreates" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a></div>';
+        + '<div style="margin-top:auto; text-align:center;"><hr style="border:none; border-top:1px solid rgba(255,255,255,0.2); margin:1.2rem 0;"><a href="https://my-portfolio-drab-nu-83.vercel.app/" target="_blank" style="color:white; text-decoration:none; font-weight:700; font-size:0.65rem; text-transform:uppercase; letter-spacing:2px;">@rishiicreates</a></div>';
 
     // ── Add to parent page ──
     doc.body.appendChild(toggle);
@@ -357,60 +336,6 @@ nav_component_html = f"""
     toggle.addEventListener('click', openNav);
     overlay.addEventListener('click', closeNav);
     doc.getElementById('navCloseBtn').addEventListener('click', closeNav);
-
-    // ── Semester -> Subjects map for dynamic filtering ──
-    var semSubjects = {sem_subjects_json};
-
-    // ── Filter select change handlers ──
-    function navigateWithFilters(sem, subj) {{
-        var inputs = doc.querySelectorAll('div[data-testid="stTextInput"] input');
-        if (inputs.length >= 2) {{
-            var semInput = inputs[0];
-            var subjInput = inputs[1];
-            
-            // React 16+ controlled input setter bypass
-            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-            
-            nativeInputValueSetter.call(semInput, sem || '');
-            semInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            
-            nativeInputValueSetter.call(subjInput, (subj || '') === 'All Subjects' ? '' : (subj || ''));
-            subjInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-            
-            // Force Streamlit rerun by simulating Enter press
-            setTimeout(function() {{
-                subjInput.dispatchEvent(new KeyboardEvent('keydown', {{
-                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
-                }}));
-            }}, 50);
-        }}
-    }}
-
-    // When semester changes: update subject dropdown options dynamically, then navigate
-    doc.getElementById('navSemSelect').addEventListener('change', function() {{
-        var sem = this.value;
-        var subjSelect = doc.getElementById('navSubjSelect');
-        var subjects = semSubjects[sem] || semSubjects[''];
-
-        // Rebuild subject dropdown
-        subjSelect.innerHTML = '<option value="">All Subjects</option>';
-        subjects.forEach(function(s) {{
-            var opt = doc.createElement('option');
-            opt.value = s;
-            opt.textContent = s;
-            subjSelect.appendChild(opt);
-        }});
-
-        // Navigate with new semester, clear subject
-        navigateWithFilters(sem, '');
-    }});
-
-    // When subject changes: navigate immediately
-    doc.getElementById('navSubjSelect').addEventListener('change', function() {{
-        var sem = doc.getElementById('navSemSelect').value;
-        var subj = this.value;
-        navigateWithFilters(sem, subj);
-    }});
 }})();
 </script>
 </body></html>
@@ -450,28 +375,9 @@ def format_sources_html(sources: list[dict]) -> str:
 
 # ── Read filter values — session_state is authoritative, hidden inputs update it ──
 
-hidden_sem = st.text_input("hidden_sem", key="st_hidden_sem", value="")
-hidden_subj = st.text_input("hidden_subj", key="st_hidden_subj", value="")
-
-if hidden_sem and hidden_sem.strip():
-    st.session_state["filter_semester"] = int(hidden_sem)
-elif hidden_sem == "":
-    # Note: When JS resets to 'All Semesters', it sends empty string
-    st.session_state["filter_semester"] = None
-
-if hidden_subj and hidden_subj.strip():
-    st.session_state["filter_subject"] = hidden_subj
-elif hidden_subj == "":
-    st.session_state["filter_subject"] = None
-
-# Fallback defaults if never set
-if "filter_semester" not in st.session_state:
-    st.session_state["filter_semester"] = None
-if "filter_subject" not in st.session_state:
-    st.session_state["filter_subject"] = None
-
-selected_sem_num = st.session_state["filter_semester"]
-selected_subject = st.session_state["filter_subject"]
+# Filters are removed from UI. Defaulting to None for global search.
+selected_sem_num = None
+selected_subject = None
 
 # Debug: Print active filters to Streamlit server log
 print(f"  🔍 Active filters — semester: {selected_sem_num}, subject: {selected_subject}")
