@@ -226,7 +226,12 @@ st.markdown("""
     }
     .site-footer a:hover { opacity: 0.8; }
 
+    /* ─── Fix stBottom Container Background avoiding black blocks ─── */
+    [data-testid="stBottom"],
+    [data-testid="stBottom"] > div,
     [data-testid="stBottomBlockContainer"] {
+        background: transparent !important;
+        background-color: transparent !important;
         padding-bottom: 2rem !important;
     }
 
