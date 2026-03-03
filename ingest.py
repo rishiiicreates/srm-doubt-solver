@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 from langchain_core.documents import Document
-from langchain_community.document_loaders import UnstructuredPowerPointLoader
+from langchain_community.document_loaders import UnstructuredPowerPointLoader, PyPDFLoader
 from langchain_ollama import OllamaEmbeddings
 import chromadb
 
@@ -38,21 +38,21 @@ from utils.chunker import chunk_documents
 # ── File Discovery ────────────────────────────────────────────────────────────
 
 
-def discover_ppt_files(data_dir: str) -> list[str]:
+def discover_documents(data_dir: str) -> list[str]:
     """
-    Recursively discover all .ppt and .pptx files in the data directory.
+    Recursively discover all .ppt, .pptx, and .pdf files in the data directory.
 
     Returns:
         List of absolute file paths.
     """
-    ppt_files = []
+    doc_files = []
     for root, _dirs, files in os.walk(data_dir):
         for f in files:
-            if f.lower().endswith((".ppt", ".pptx")):
-                ppt_files.append(os.path.join(root, f))
+            if f.lower().endswith((".ppt", ".pptx", ".pdf")):
+                doc_files.append(os.path.join(root, f))
 
-    ppt_files.sort()
-    return ppt_files
+    doc_files.sort()
+    return doc_files
 
 
 # ── Hash-Based Deduplication ──────────────────────────────────────────────────
@@ -80,40 +80,45 @@ def compute_file_hash(filepath: str) -> str:
     return _md5(filepath)
 
 
-# ── PPT Loading ───────────────────────────────────────────────────────────────
+# ── Document Loading ──────────────────────────────────────────────────────────────
 
 
-def load_ppt_file(filepath: str) -> list[Document]:
+def load_doc_file(filepath: str) -> list[Document]:
     """
-    Load a single PPT/PPTX file using UnstructuredPowerPointLoader.
-    Extracts slide body text and speaker notes per slide.
+    Load a single PPT/PPTX/PDF file using appropriate loaders.
+    Extracts text per slide/page.
 
     Returns:
-        List of Documents, one per slide/element.
+        List of Documents, one per slide/page.
     """
     try:
-        # mode="elements" gives us per-slide/per-element granularity
-        loader = UnstructuredPowerPointLoader(filepath, mode="elements")
-        documents = loader.load()
-
-        if not documents:
-            # Fallback to single-document mode
-            loader = UnstructuredPowerPointLoader(filepath, mode="single")
+        lower_path = filepath.lower()
+        if lower_path.endswith('.pdf'):
+            loader = PyPDFLoader(filepath)
+            return loader.load()
+        else:
+            # mode="elements" gives us per-slide/per-element granularity
+            loader = UnstructuredPowerPointLoader(filepath, mode="elements")
             documents = loader.load()
 
-        return documents
+            if not documents:
+                # Fallback to single-document mode
+                loader = UnstructuredPowerPointLoader(filepath, mode="single")
+                documents = loader.load()
+
+            return documents
 
     except Exception as e:
         print(f"  ⚠ Failed to load {filepath}: {e}")
         return []
 
 
-def load_and_tag_documents(ppt_files: list[str], manifest_data: dict | None = None) -> list[Document]:
+def load_and_tag_documents(doc_files: list[str], manifest_data: dict | None = None) -> list[Document]:
     """
-    Load all PPT files and tag each document with metadata.
+    Load all document files and tag each document with metadata.
 
     Args:
-        ppt_files: List of file paths to load.
+        doc_files: List of file paths to load.
         manifest_data: Loaded manifest for URL cross-referencing.
 
     Returns:
@@ -121,15 +126,15 @@ def load_and_tag_documents(ppt_files: list[str], manifest_data: dict | None = No
     """
     all_documents = []
 
-    for filepath in ppt_files:
+    for filepath in doc_files:
         print(f"\n  📄 Loading: {os.path.basename(filepath)}")
 
         # Extract base metadata from file path
         base_meta = extract_metadata_from_path(filepath)
         base_meta["source_filepath"] = filepath
 
-        # Load the PPT
-        raw_docs = load_ppt_file(filepath)
+        # Load the document
+        raw_docs = load_doc_file(filepath)
 
         if not raw_docs:
             print(f"    ⚠ No content extracted from {os.path.basename(filepath)}")
@@ -270,13 +275,13 @@ def run_ingestion(reindex: bool = False, skip_scrape: bool = False) -> None:
 
     all_chunks = list(syllabus_docs)  # Each KB doc is already chunk-sized
 
-    # ── Step 2: Optionally load PPT files as supplementary content ────────
-    print("\n📂 Step 2: Checking for supplementary PPT files...")
+    # ── Step 2: Optionally load PDF/PPT files as supplementary content ────────
+    print("\n📂 Step 2: Checking for supplementary documents in data/...")
     os.makedirs(DATA_DIR, exist_ok=True)
-    ppt_files = discover_ppt_files(DATA_DIR)
+    doc_files = discover_documents(DATA_DIR)
 
-    if ppt_files:
-        print(f"  📁 Found {len(ppt_files)} supplementary PPT files")
+    if doc_files:
+        print(f"  📁 Found {len(doc_files)} supplementary document files")
 
         if not skip_scrape:
             try:
@@ -285,15 +290,15 @@ def run_ingestion(reindex: bool = False, skip_scrape: bool = False) -> None:
                 print(f"  ⚠ Scraping encountered errors: {e}")
 
         manifest_data = load_manifest()
-        documents = load_and_tag_documents(ppt_files, manifest_data)
+        documents = load_and_tag_documents(doc_files, manifest_data)
 
         if documents:
-            print(f"  📄 Loaded {len(documents)} PPT elements")
-            ppt_chunks = chunk_documents(documents)
-            all_chunks.extend(ppt_chunks)
-            print(f"  ✅ Added {len(ppt_chunks)} PPT chunks")
+            print(f"  📄 Loaded {len(documents)} document elements")
+            doc_chunks = chunk_documents(documents)
+            all_chunks.extend(doc_chunks)
+            print(f"  ✅ Added {len(doc_chunks)} document chunks")
     else:
-        print("  ℹ No supplementary PPT files found (using syllabus KB only)")
+        print("  ℹ No supplementary document files found (using syllabus KB only)")
 
     # ── Step 3: Embed and store ───────────────────────────────────────────
     print(f"\n🧠 Step 3: Embedding and storing {len(all_chunks)} chunks in ChromaDB...")
@@ -304,7 +309,7 @@ def run_ingestion(reindex: bool = False, skip_scrape: bool = False) -> None:
     print("\n" + "=" * 70)
     print(f"✅ Ingestion complete in {elapsed:.1f}s")
     print(f"   Syllabus KB docs: {len(syllabus_docs)}")
-    print(f"   PPT chunks: {len(all_chunks) - len(syllabus_docs)}")
+    print(f"   Document chunks: {len(all_chunks) - len(syllabus_docs)}")
     print(f"   Total chunks stored: {len(all_chunks)}")
     print("=" * 70)
 

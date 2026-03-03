@@ -59,6 +59,12 @@ def extract_metadata_from_path(filepath: str) -> dict:
                 metadata["subject"] = _format_subject_name(parts[i + 1])
                 break
 
+    # Hardcoded metadata for the root dsai_syllabus.pdf
+    if metadata["source_filename"] == "dsai_syllabus.pdf":
+        metadata["subject"] = "DSAI Syllabus"
+        metadata["semester"] = 0  # Represents overall program curriculum
+
+
     # Extract unit number from filename
     unit_num = extract_unit_from_filename(metadata["source_filename"])
     if unit_num:

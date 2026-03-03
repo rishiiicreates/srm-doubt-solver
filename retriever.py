@@ -200,15 +200,11 @@ class SyllabusRetriever:
         query: str,
     ) -> list[RetrievedChunk]:
         """
-        Two-layer precision filter to ensure only genuinely relevant
+        Precision filter to ensure only genuinely relevant
         chunks appear in the source references.
 
-        Layer 1 — Gap filter: Only keep chunks within 3% similarity
+        Gap filter: Only keep chunks within 3% similarity
         of the best match (drops "vaguely similar" noise).
-
-        Layer 2 — Keyword filter: If any chunk's subject or unit name
-        contains a keyword from the query, prioritize those and drop
-        chunks without keyword overlap.
         """
         if not chunks:
             return chunks
@@ -216,41 +212,11 @@ class SyllabusRetriever:
         # Sort by similarity (highest first)
         chunks.sort(key=lambda c: c.similarity_score, reverse=True)
 
-        # Layer 1: Gap filter
+        # Gap filter
         best_score = chunks[0].similarity_score
         gap_cutoff = best_score - 0.03
         chunks = [c for c in chunks if c.similarity_score >= gap_cutoff]
 
-        # Layer 2: Keyword relevance filter
-        # Extract meaningful keywords from query (3+ chars, not stopwords)
-        stopwords = {
-            "what", "how", "does", "explain", "describe", "define",
-            "compare", "difference", "between", "the", "and", "for",
-            "with", "from", "about", "this", "that", "are", "was",
-            "were", "will", "can", "could", "would", "should", "have",
-            "has", "had", "not", "but", "also", "which", "their",
-            "when", "where", "give", "tell", "discuss", "elaborate",
-        }
-        query_words = {
-            w.lower().strip(".,?!") for w in query.split()
-            if len(w) >= 3 and w.lower().strip(".,?!") not in stopwords
-        }
-
-        if not query_words:
-            return chunks
-
-        def has_keyword_match(chunk: RetrievedChunk) -> bool:
-            """Check if subject or unit name contains query keywords."""
-            text = f"{chunk.subject} {chunk.unit_name}".lower()
-            return any(kw in text for kw in query_words)
-
-        matched = [c for c in chunks if has_keyword_match(c)]
-
-        # If some chunks keyword-match, keep only those
-        if matched:
-            return matched
-
-        # Otherwise keep all gap-filtered chunks (embedding-only match)
         return chunks
 
     def _build_filter(
