@@ -135,24 +135,38 @@ st.markdown("""
         line-height: 1.7;
         color: var(--charcoal);
     }
-    /* Minimal avatars — hide the default SVG icons, keep just the circle */
-    .stChatMessage [data-testid="chatAvatarIcon-assistant"] svg,
-    .stChatMessage [data-testid="chatAvatarIcon-user"] svg {
+    /* Hide user avatar completely */
+    .stChatMessage [data-testid="chatAvatarIcon-user"] {
         display: none !important;
     }
-    .stChatMessage [data-testid="chatAvatarIcon-assistant"],
-    .stChatMessage [data-testid="chatAvatarIcon-user"] {
-        width: 26px !important;
-        height: 26px !important;
-        min-width: 26px !important;
-        border-radius: 50% !important;
+    /* Minimal assistant avatar — small dark dot */
+    .stChatMessage [data-testid="chatAvatarIcon-assistant"] svg {
+        display: none !important;
     }
     .stChatMessage [data-testid="chatAvatarIcon-assistant"] {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        border-radius: 50% !important;
         background: var(--deep-black) !important;
     }
-    .stChatMessage [data-testid="chatAvatarIcon-user"] {
-        background: var(--orange) !important;
+
+    /* Thinking dots animation */
+    @keyframes dot-pulse {
+        0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+        40% { opacity: 1; transform: scale(1); }
     }
+    .thinking-dots {
+        display: flex; gap: 5px; padding: 8px 0;
+    }
+    .thinking-dots span {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--charcoal);
+        animation: dot-pulse 1.4s ease-in-out infinite;
+    }
+    .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
 
     /* Chat input */
     .stChatInput > div {
@@ -379,30 +393,32 @@ if prompt := st.chat_input("What would you like to understand?"):
         # to give the LLM conversational memory.
         chat_context = st.session_state.messages[:-1][-5:]
 
-        with st.spinner("Thinking..."):
-            resp_ph = st.empty()
-            src_ph = st.empty()
-            full_response = ""
-            final_sources = []
+        # Show animated dots while thinking
+        dots_html = '<div class="thinking-dots"><span></span><span></span><span></span></div>'
+        resp_ph = st.empty()
+        resp_ph.markdown(dots_html, unsafe_allow_html=True)
+        src_ph = st.empty()
+        full_response = ""
+        final_sources = []
 
-            for chunk in generate_response_stream(prompt, semester_filter, subject_filter, chat_history=chat_context):
-                if chunk["type"] == "refusal":
-                    full_response = chunk["content"]
-                    resp_ph.markdown(full_response)
-                    break
-                elif chunk["type"] == "sources":
-                    final_sources = chunk["sources"]
-                elif chunk["type"] == "token":
-                    full_response += chunk["content"]
-                    resp_ph.markdown(full_response + "●")
-                elif chunk["type"] == "done":
-                    full_response = chunk["content"]
-                    final_sources = chunk.get("sources", final_sources)
-                    break
+        for chunk in generate_response_stream(prompt, semester_filter, subject_filter, chat_history=chat_context):
+            if chunk["type"] == "refusal":
+                full_response = chunk["content"]
+                resp_ph.markdown(full_response)
+                break
+            elif chunk["type"] == "sources":
+                final_sources = chunk["sources"]
+            elif chunk["type"] == "token":
+                full_response += chunk["content"]
+                resp_ph.markdown(full_response + "●")
+            elif chunk["type"] == "done":
+                full_response = chunk["content"]
+                final_sources = chunk.get("sources", final_sources)
+                break
 
-            resp_ph.markdown(full_response)
-            if final_sources:
-                src_ph.markdown(format_sources_html(final_sources), unsafe_allow_html=True)
+        resp_ph.markdown(full_response)
+        if final_sources:
+            src_ph.markdown(format_sources_html(final_sources), unsafe_allow_html=True)
 
     idx = len(st.session_state.messages)
     st.session_state.messages.append({"role": "assistant", "content": full_response})
