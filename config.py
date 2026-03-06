@@ -27,7 +27,7 @@ MAX_CHUNK_TOKENS: int = 300    # hard ceiling — content above this gets split
 
 # ── Retrieval ─────────────────────────────────────────────────────────────────
 TOP_K: int = 5
-SIMILARITY_THRESHOLD: float = 0.45   # higher to filter out irrelevant matches
+SIMILARITY_THRESHOLD: float = 0.55   # higher to filter out irrelevant matches
 
 # ── Embedding ─────────────────────────────────────────────────────────────────
 EMBEDDING_BATCH_SIZE: int = 32
