@@ -135,20 +135,15 @@ st.markdown("""
         line-height: 1.7;
         color: var(--charcoal);
     }
-    /* Hide user avatar completely */
-    .stChatMessage [data-testid="chatAvatarIcon-user"] {
-        display: none !important;
-    }
-    /* Minimal assistant avatar — small dark dot */
-    .stChatMessage [data-testid="chatAvatarIcon-assistant"] svg {
-        display: none !important;
-    }
+    /* Nuke ALL avatars — user and assistant */
+    .stChatMessage [data-testid="chatAvatarIcon-user"],
     .stChatMessage [data-testid="chatAvatarIcon-assistant"] {
-        width: 24px !important;
-        height: 24px !important;
-        min-width: 24px !important;
-        border-radius: 50% !important;
-        background: var(--deep-black) !important;
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
     }
 
     /* Thinking dots animation */
