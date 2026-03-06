@@ -150,7 +150,7 @@ st.markdown("""
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 3rem;
         font-weight: 700;
-        color: var(--deep-black);
+        color: var(--deep-black) !important;
         line-height: 1.15;
         margin: 0 0 0.6rem 0;
         letter-spacing: -0.5px;
@@ -170,16 +170,19 @@ st.markdown("""
         margin-bottom: 0.6rem;
         animation: fade-up 0.35s ease-out;
     }
-    [data-testid="stChatMessageContent"] {
-        font-family: 'Inter', sans-serif !important;
-        font-size: 0.92rem;
-        line-height: 1.7;
-        color: var(--charcoal);
     }
     /* Remove ALL chat avatars */
     [data-testid="stChatMessageAvatarUser"],
     [data-testid="stChatMessageAvatarAssistant"] {
         display: none !important;
+    }
+
+    /* Message content and general markdown text color explicitly defined for theming */
+    [data-testid="stChatMessageContent"], 
+    .stMarkdown p, 
+    .stMarkdown span, 
+    .stMarkdown {
+        color: var(--charcoal) !important;
     }
 
     /* Thinking dots animation */
@@ -208,6 +211,9 @@ st.markdown("""
         box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
         transition: all 0.3s ease !important;
     }
+    .stChatInput textarea {
+        color: var(--charcoal) !important;
+    }
     .stChatInput > div:focus-within {
         border-color: var(--orange) !important;
         box-shadow: 0 4px 20px rgba(255,77,0,0.1) !important;
@@ -228,9 +234,9 @@ st.markdown("""
        SOURCE CARDS
        ═══════════════════════════════════════════════ */
     .src-card {
-        background: var(--card-bg);
+        background: var(--card-bg) !important;
         backdrop-filter: blur(14px);
-        border: 1px solid var(--glass-border);
+        border: 1px solid var(--glass-border) !important;
         border-radius: 14px;
         padding: 1rem 1.1rem;
         margin-top: 0.8rem;
@@ -247,14 +253,14 @@ st.markdown("""
         letter-spacing: 2px;
     }
     .src-item {
-        background: rgba(255,255,255,0.45);
-        border-left: 3px solid var(--orange);
+        background: var(--orange-light) !important;
+        border-left: 3px solid var(--orange) !important;
         padding: 0.5rem 0.8rem;
         margin-bottom: 0.4rem;
         border-radius: 0 8px 8px 0;
         font-family: 'Inter', sans-serif;
         font-size: 0.78rem;
-        color: var(--charcoal);
+        color: var(--charcoal) !important;
         transition: all 0.2s ease;
     }
     .src-item:hover {
@@ -276,13 +282,13 @@ st.markdown("""
         z-index: 100000;
         font-family: 'Space Grotesk', sans-serif;
         font-size: 0.65rem;
-        color: #9CA3AF;
+        color: var(--warm-gray) !important;
         letter-spacing: 1.5px;
         text-transform: uppercase;
         pointer-events: none;
     }
     .site-footer a {
-        color: var(--orange);
+        color: var(--orange) !important;
         text-decoration: none;
         font-weight: 700;
         pointer-events: auto;
@@ -302,90 +308,118 @@ st.markdown("""
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
     div[data-testid="stTextInput"] { display: none !important; }
 
-    /* ─── Theme Toggle Button ─── */
-    .theme-toggle {
-        position: fixed;
-        bottom: 25px; /* Above the footer text */
-        right: 20px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--card-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 100001;
-        transition: all 0.3s ease;
-        color: var(--charcoal);
-        font-size: 1.1rem;
-    }
-    .theme-toggle:hover {
-        transform: scale(1.1);
-        border-color: var(--orange);
-        color: var(--orange);
-    }
-    /* We inject an invisible hidden input to bridge JS logic */
-    #theme-switch-hack { display: none; }
-
 </style>
+""", unsafe_allow_html=True)
 
-<!-- Theme Toggle JavaScript Logic -->
-<script>
-    function getSystemTheme() {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
+import streamlit.components.v1 as components
 
-    // Set initial icon based on actual current theme (localStorage OR system)
-    function updateThemeIcon() {
-        const docTheme = window.parent.document.documentElement.getAttribute('data-theme');
-        const activeTheme = docTheme || getSystemTheme();
-        const iconElement = window.parent.document.getElementById('theme-icon');
-        if (iconElement) {
-            iconElement.innerHTML = activeTheme === 'dark' ? '☀️' : '🌙';
+# ── Dynamic Native Theme Switch Injection ──
+# Because Streamlit strips <script> tags in standard markdown, we use a hidden iframe
+# component to reach up into the parent window and inject a slick CSS iOS-style toggle.
+components.html(
+    """
+    <script>
+        const parentDoc = window.parent.document;
+        
+        // 1. Inject CSS for the Switch
+        if (!parentDoc.getElementById('custom-theme-style')) {
+            const style = parentDoc.createElement('style');
+            style.id = 'custom-theme-style';
+            style.innerHTML = `
+                .theme-switch-wrapper {
+                    position: fixed;
+                    top: 25px; 
+                    right: 25px;
+                    z-index: 100001;
+                    display: flex;
+                    align-items: center;
+                }
+                .theme-switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 50px;
+                    height: 28px;
+                }
+                .theme-switch input { 
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+                .tslider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background-color: var(--glass-border, rgba(255, 77, 0, 0.1));
+                    backdrop-filter: blur(10px);
+                    transition: .4s;
+                    border-radius: 34px;
+                    border: 1px solid var(--orange);
+                }
+                .tslider:before {
+                    position: absolute;
+                    content: "";
+                    height: 18px;
+                    width: 18px;
+                    left: 4px;
+                    bottom: 4px;
+                    background-color: var(--orange);
+                    transition: .4s;
+                    border-radius: 50%;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                }
+                input:checked + .tslider {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    border-color: #FAFAFA;
+                }
+                input:checked + .tslider:before {
+                    transform: translateX(22px);
+                    background-color: #FAFAFA;
+                }
+            `;
+            parentDoc.head.appendChild(style);
         }
-    }
 
-    // Initialize toggle listener
-    function initThemeToggle() {
-        const toggleBtn = window.parent.document.getElementById('theme-toggle-btn');
-        if (toggleBtn && !toggleBtn.hasAttribute('data-initialized')) {
-            toggleBtn.setAttribute('data-initialized', 'true');
+        // 2. Inject the Toggle Switch UI
+        if (!parentDoc.getElementById('custom-theme-switch')) {
+            const wrapper = parentDoc.createElement('div');
+            wrapper.id = 'custom-theme-switch';
+            wrapper.className = 'theme-switch-wrapper';
+            
+            wrapper.innerHTML = `
+                <label class="theme-switch" for="theme-toggle-input">
+                    <input type="checkbox" id="theme-toggle-input">
+                    <span class="tslider"></span>
+                </label>
+            `;
+            parentDoc.body.appendChild(wrapper);
+            
+            // 3. Logic Setup
+            const checkbox = parentDoc.getElementById('theme-toggle-input');
+            
+            function getSystemTheme() {
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
             
             // Apply stored theme on load
-            const storedTheme = localStorage.getItem('srm_doubt_theme');
+            const storedTheme = window.localStorage.getItem('srm_doubt_theme');
             if (storedTheme) {
-                window.parent.document.documentElement.setAttribute('data-theme', storedTheme);
+                parentDoc.documentElement.setAttribute('data-theme', storedTheme);
+                checkbox.checked = (storedTheme === 'dark');
+            } else {
+                checkbox.checked = (getSystemTheme() === 'dark');
             }
 
-            updateThemeIcon();
-
-            toggleBtn.addEventListener('click', () => {
-                const currentDataTheme = window.parent.document.documentElement.getAttribute('data-theme');
-                const systemTheme = getSystemTheme();
-                
-                // Determine what the current effectively applied theme is
-                const currentIsDark = currentDataTheme ? (currentDataTheme === 'dark') : (systemTheme === 'dark');
-                const newTheme = currentIsDark ? 'light' : 'dark';
-                
-                window.parent.document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('srm_doubt_theme', newTheme);
-                updateThemeIcon();
+            checkbox.addEventListener('change', function() {
+                const newTheme = this.checked ? 'dark' : 'light';
+                parentDoc.documentElement.setAttribute('data-theme', newTheme);
+                window.localStorage.setItem('srm_doubt_theme', newTheme);
             });
         }
-    }
-
-    // Run when iframe loads (Streamlit uses iframes for components)
-    setTimeout(initThemeToggle, 500);
-</script>
-
-<div id="theme-toggle-btn" class="theme-toggle">
-    <span id="theme-icon">🌙</span>
-</div>
-""", unsafe_allow_html=True)
+    </script>
+    """,
+    height=0,
+    width=0,
+)
 
 # ── Particles ─────────────────────────────────────────────────────────────────
 st.markdown('<div class="particles"><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div><div class="p"></div></div>', unsafe_allow_html=True)
