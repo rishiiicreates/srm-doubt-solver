@@ -32,59 +32,75 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
     :root {
-        --orange: #FF4D00;
+        --theme-text: #131313;
+        --theme-heading: #131313;
+        --orange-accent: #FF4D00;
         --orange-light: rgba(255, 77, 0, 0.08);
-        --deep-black: #131313;
-        --charcoal: #2D2D2D;
-        --warm-gray: #6B6B6B;
-        --light-gray: #9CA3AF;
-        --off-white: #FAFAFA;
         --card-bg: rgba(255, 255, 255, 0.65);
         --glass-border: rgba(255, 255, 255, 0.45);
         --bg-gradient: linear-gradient(180deg, #FFF3E6 0%, #FFDCC8 12%, #F5E6F0 35%, #E8EDF8 55%, #F0F4FF 75%, #FAFBFF 100%);
+        --input-bg: rgba(255, 255, 255, 0.85);
+        --input-text: #131313;
+        --placeholder: #6B6B6B;
+        --btn-bg: #131313;
+        --btn-hover: #2D2D2D;
+        --btn-icon: #FFFFFF;
+        --footer-text: #6B6B6B;
     }
 
     @media (prefers-color-scheme: dark) {
         :root:not([data-theme="light"]) {
-            --orange: #FF6B2B;
+            --theme-text: #E5E7EB;
+            --theme-heading: #FFFFFF;
+            --orange-accent: #FF6B2B;
             --orange-light: rgba(255, 107, 43, 0.15);
-            --deep-black: #FFFFFF;
-            --charcoal: #E5E7EB;
-            --warm-gray: #9CA3AF;
-            --light-gray: #6B7280;
-            --off-white: #111827;
             --card-bg: rgba(31, 41, 55, 0.65);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --bg-gradient: linear-gradient(180deg, #1A1210 0%, #2A1710 12%, #18151A 35%, #10141C 55%, #0B101A 75%, #080A0F 100%);
+            --bg-gradient: linear-gradient(180deg, #0f1218 0%, #151012 25%, #181922 55%, #0B101A 100%);
+            --input-bg: rgba(16, 20, 26, 0.75);
+            --input-text: #FFFFFF;
+            --placeholder: #8A93A2;
+            --btn-bg: #FFFFFF;
+            --btn-hover: #D1D5DB;
+            --btn-icon: #000000;
+            --footer-text: #8A93A2;
         }
     }
 
     /* Manual dark mode override if system is light but user toggles dark */
     :root[data-theme="dark"] {
-        --orange: #FF6B2B;
+        --theme-text: #E5E7EB;
+        --theme-heading: #FFFFFF;
+        --orange-accent: #FF6B2B;
         --orange-light: rgba(255, 107, 43, 0.15);
-        --deep-black: #FFFFFF;
-        --charcoal: #E5E7EB;
-        --warm-gray: #9CA3AF;
-        --light-gray: #6B7280;
-        --off-white: #111827;
         --card-bg: rgba(31, 41, 55, 0.65);
         --glass-border: rgba(255, 255, 255, 0.1);
-        --bg-gradient: linear-gradient(180deg, #1A1210 0%, #2A1710 12%, #18151A 35%, #10141C 55%, #0B101A 75%, #080A0F 100%);
+        --bg-gradient: linear-gradient(180deg, #0f1218 0%, #151012 25%, #181922 55%, #0B101A 100%);
+        --input-bg: rgba(16, 20, 26, 0.75);
+        --input-text: #FFFFFF;
+        --placeholder: #8A93A2;
+        --btn-bg: #FFFFFF;
+        --btn-hover: #D1D5DB;
+        --btn-icon: #000000;
+        --footer-text: #8A93A2;
     }
 
     /* Manual light mode override if system is dark but user toggles light */
     :root[data-theme="light"] {
-        --orange: #FF4D00;
+        --theme-text: #131313;
+        --theme-heading: #131313;
+        --orange-accent: #FF4D00;
         --orange-light: rgba(255, 77, 0, 0.08);
-        --deep-black: #131313;
-        --charcoal: #2D2D2D;
-        --warm-gray: #6B6B6B;
-        --light-gray: #9CA3AF;
-        --off-white: #FAFAFA;
         --card-bg: rgba(255, 255, 255, 0.65);
         --glass-border: rgba(255, 255, 255, 0.45);
         --bg-gradient: linear-gradient(180deg, #FFF3E6 0%, #FFDCC8 12%, #F5E6F0 35%, #E8EDF8 55%, #F0F4FF 75%, #FAFBFF 100%);
+        --input-bg: rgba(255, 255, 255, 0.85);
+        --input-text: #131313;
+        --placeholder: #6B6B6B;
+        --btn-bg: #131313;
+        --btn-hover: #2D2D2D;
+        --btn-icon: #FFFFFF;
+        --footer-text: #6B6B6B;
     }
 
     /* ─── Background ─── */
@@ -150,13 +166,13 @@ st.markdown("""
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 3rem;
         font-weight: 700;
-        color: var(--deep-black) !important;
+        color: var(--theme-heading) !important;
         line-height: 1.15;
         margin: 0 0 0.6rem 0;
         letter-spacing: -0.5px;
     }
     .hero-title .hl {
-        background: linear-gradient(135deg, var(--orange), #E85D75);
+        background: linear-gradient(135deg, var(--orange-accent), #E85D75);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -181,7 +197,7 @@ st.markdown("""
     [data-testid="stChatMessageContent"], 
     .stMarkdown p, 
     .stMarkdown li {
-        color: var(--charcoal) !important;
+        color: var(--theme-text) !important;
     }
 
     /* Polish inline and block code backgrounds for dark/light mode */
@@ -192,7 +208,7 @@ st.markdown("""
     }
     .stMarkdown code {
         background: rgba(120, 120, 120, 0.08) !important;
-        color: var(--orange) !important;
+        color: var(--orange-accent) !important;
         border-radius: 4px;
         padding: 0.1em 0.3em;
     }
@@ -213,37 +229,59 @@ st.markdown("""
     .thinking-dots span {
         width: 7px; height: 7px;
         border-radius: 50%;
-        background: var(--charcoal);
+        background: var(--theme-text);
         animation: dot-pulse 1.4s ease-in-out infinite;
     }
     .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
     .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-    /* Chat input */
-    .stChatInput > div {
+    /* Chat input completely modernized */
+    .stChatInput > div,
+    [data-testid="stChatInput"] {
         border-radius: 50px !important;
-        border: 2px solid rgba(255,77,0,0.12) !important;
-        background: var(--card-bg) !important;
+        border: 1px solid var(--glass-border) !important;
+        background: var(--input-bg) !important;
         backdrop-filter: blur(10px) !important;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
         transition: all 0.3s ease !important;
     }
-    .stChatInput textarea {
-        color: var(--charcoal) !important;
+    
+    /* Make internal Streamlit wrapper containers fully transparent */
+    .stChatInput div[data-baseweb], 
+    .stChatInput div[data-baseweb="base-input"] {
+        background: transparent !important;
     }
-    .stChatInput > div:focus-within {
-        border-color: var(--orange) !important;
+
+    .stChatInput textarea {
+        color: var(--input-text) !important;
+        background: transparent !important;
+    }
+    
+    .stChatInput textarea::placeholder {
+        color: var(--placeholder) !important;
+        opacity: 1 !important;
+    }
+
+    .stChatInput > div:focus-within,
+    [data-testid="stChatInput"]:focus-within {
+        border-color: var(--orange-accent) !important;
         box-shadow: 0 4px 20px rgba(255,77,0,0.1) !important;
     }
+    /* Send button */
     .stChatInput button {
-        background: var(--deep-black) !important;
+        background: var(--btn-bg) !important;
         border-radius: 50px !important;
-        color: white !important;
         border: none !important;
         transition: all 0.25s ease !important;
+        padding: 4px;
+    }
+    /* Make Streamlit's send icon match the theme dynamically */
+    .stChatInput button svg {
+        fill: var(--btn-icon) !important;
+        color: var(--btn-icon) !important;
     }
     .stChatInput button:hover {
-        background: var(--charcoal) !important;
+        background: var(--btn-hover) !important;
         transform: scale(1.05);
     }
 
@@ -271,20 +309,20 @@ st.markdown("""
     }
     .src-item {
         background: var(--orange-light) !important;
-        border-left: 3px solid var(--orange) !important;
+        border-left: 3px solid var(--orange-accent) !important;
         padding: 0.5rem 0.8rem;
         margin-bottom: 0.4rem;
         border-radius: 0 8px 8px 0;
         font-family: 'Inter', sans-serif;
         font-size: 0.78rem;
-        color: var(--charcoal) !important;
+        color: var(--theme-text) !important;
         transition: all 0.2s ease;
     }
     .src-item:hover {
         background: var(--orange-light);
         transform: translateX(3px);
     }
-    .src-item strong { color: var(--orange); font-weight: 600; }
+    .src-item strong { color: var(--orange-accent); font-weight: 600; }
 
     /* ═══════════════════════════════════════════════
        FOOTER
@@ -299,13 +337,14 @@ st.markdown("""
         z-index: 100000;
         font-family: 'Space Grotesk', sans-serif;
         font-size: 0.65rem;
-        color: var(--warm-gray) !important;
+        font-size: 0.65rem;
+        color: var(--footer-text) !important;
         letter-spacing: 1.5px;
         text-transform: uppercase;
         pointer-events: none;
     }
     .site-footer a {
-        color: var(--orange) !important;
+        color: var(--orange-accent) !important;
         text-decoration: none;
         font-weight: 700;
         pointer-events: auto;
