@@ -213,7 +213,7 @@ st.markdown("""
         padding: 0.1em 0.3em;
     }
     .stMarkdown pre code {
-        color: inherit !important;
+        color: var(--theme-text) !important;
         background: transparent !important;
         padding: 0;
     }
