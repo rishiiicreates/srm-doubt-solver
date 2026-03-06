@@ -135,15 +135,10 @@ st.markdown("""
         line-height: 1.7;
         color: var(--charcoal);
     }
-    /* Nuke ALL avatars — user and assistant */
-    .stChatMessage [data-testid="chatAvatarIcon-user"],
-    .stChatMessage [data-testid="chatAvatarIcon-assistant"] {
+    /* Remove ALL chat avatars */
+    [data-testid="stChatMessageAvatarUser"],
+    [data-testid="stChatMessageAvatarAssistant"] {
         display: none !important;
-        width: 0 !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
     }
 
     /* Thinking dots animation */
