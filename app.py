@@ -135,6 +135,22 @@ st.markdown("""
         line-height: 1.7;
         color: var(--charcoal);
     }
+    /* Minimal avatars */
+    .stChatMessage [data-testid="chatAvatarIcon-assistant"],
+    .stChatMessage [data-testid="chatAvatarIcon-user"] {
+        display: none !important;
+    }
+    .stChatMessage > div:first-child > div:first-child {
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+    }
 
     /* Chat input */
     .stChatInput > div {
@@ -337,7 +353,8 @@ st.markdown(
 # ── Chat History ──────────────────────────────────────────────────────────────
 
 for i, msg in enumerate(st.session_state.messages):
-    with st.chat_message(msg["role"]):
+    avatar = "✦" if msg["role"] == "assistant" else "›"
+    with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
         if msg["role"] == "assistant" and i in st.session_state.sources_map:
             srcs = st.session_state.sources_map[i]
@@ -349,10 +366,10 @@ for i, msg in enumerate(st.session_state.messages):
 
 if prompt := st.chat_input("What would you like to understand?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="›"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="✦"):
         semester_filter = selected_sem_num
         subject_filter = selected_subject
         print(f"  🚀 Generating response — query='{prompt}', sem={semester_filter}, subj={subject_filter}")
