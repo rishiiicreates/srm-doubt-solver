@@ -135,21 +135,23 @@ st.markdown("""
         line-height: 1.7;
         color: var(--charcoal);
     }
-    /* Minimal avatars */
-    .stChatMessage [data-testid="chatAvatarIcon-assistant"],
-    .stChatMessage [data-testid="chatAvatarIcon-user"] {
+    /* Minimal avatars — hide the default SVG icons, keep just the circle */
+    .stChatMessage [data-testid="chatAvatarIcon-assistant"] svg,
+    .stChatMessage [data-testid="chatAvatarIcon-user"] svg {
         display: none !important;
     }
-    .stChatMessage > div:first-child > div:first-child {
-        width: 28px !important;
-        height: 28px !important;
-        min-width: 28px !important;
+    .stChatMessage [data-testid="chatAvatarIcon-assistant"],
+    .stChatMessage [data-testid="chatAvatarIcon-user"] {
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
         border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 0.8rem !important;
-        font-weight: 600 !important;
+    }
+    .stChatMessage [data-testid="chatAvatarIcon-assistant"] {
+        background: var(--deep-black) !important;
+    }
+    .stChatMessage [data-testid="chatAvatarIcon-user"] {
+        background: var(--orange) !important;
     }
 
     /* Chat input */
@@ -353,8 +355,7 @@ st.markdown(
 # ── Chat History ──────────────────────────────────────────────────────────────
 
 for i, msg in enumerate(st.session_state.messages):
-    avatar = "✦" if msg["role"] == "assistant" else "›"
-    with st.chat_message(msg["role"], avatar=avatar):
+    with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if msg["role"] == "assistant" and i in st.session_state.sources_map:
             srcs = st.session_state.sources_map[i]
@@ -366,10 +367,10 @@ for i, msg in enumerate(st.session_state.messages):
 
 if prompt := st.chat_input("What would you like to understand?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="›"):
+    with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant", avatar="✦"):
+    with st.chat_message("assistant"):
         semester_filter = selected_sem_num
         subject_filter = selected_subject
         print(f"  🚀 Generating response — query='{prompt}', sem={semester_filter}, subj={subject_filter}")
