@@ -180,9 +180,26 @@ st.markdown("""
     /* Message content and general markdown text color explicitly defined for theming */
     [data-testid="stChatMessageContent"], 
     .stMarkdown p, 
-    .stMarkdown span, 
-    .stMarkdown {
+    .stMarkdown li {
         color: var(--charcoal) !important;
+    }
+
+    /* Polish inline and block code backgrounds for dark/light mode */
+    .stMarkdown pre {
+        background: rgba(120, 120, 120, 0.08) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 8px !important;
+    }
+    .stMarkdown code {
+        background: rgba(120, 120, 120, 0.08) !important;
+        color: var(--orange) !important;
+        border-radius: 4px;
+        padding: 0.1em 0.3em;
+    }
+    .stMarkdown pre code {
+        color: inherit !important;
+        background: transparent !important;
+        padding: 0;
     }
 
     /* Thinking dots animation */
@@ -498,6 +515,9 @@ if "messages" not in st.session_state:
 if "sources_map" not in st.session_state:
     st.session_state.sources_map = {}
 
+# 1x1 transparent PNG to completely hide the chat avatars without crashing Streamlit
+GHOST_AVATAR = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
 
@@ -512,7 +532,7 @@ st.markdown(
 # ── Chat History ──────────────────────────────────────────────────────────────
 
 for i, msg in enumerate(st.session_state.messages):
-    with st.chat_message(msg["role"]):
+    with st.chat_message(msg["role"], avatar=GHOST_AVATAR):
         st.markdown(msg["content"])
         if msg["role"] == "assistant" and i in st.session_state.sources_map:
             srcs = st.session_state.sources_map[i]
@@ -524,10 +544,10 @@ for i, msg in enumerate(st.session_state.messages):
 
 if prompt := st.chat_input("What would you like to understand?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=GHOST_AVATAR):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=GHOST_AVATAR):
         semester_filter = selected_sem_num
         subject_filter = selected_subject
         print(f"  🚀 Generating response — query='{prompt}', sem={semester_filter}, subj={subject_filter}")
