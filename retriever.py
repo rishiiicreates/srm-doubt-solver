@@ -203,8 +203,9 @@ class SyllabusRetriever:
         Precision filter to ensure only genuinely relevant
         chunks appear in the source references.
 
-        Gap filter: Only keep chunks within 3% similarity
-        of the best match (drops "vaguely similar" noise).
+        Gap filter: Only keep chunks within 1.5% similarity
+        of the best match.
+        Subject isolation: Only keep chunks from the top-scoring subject.
         """
         if not chunks:
             return chunks
@@ -214,8 +215,15 @@ class SyllabusRetriever:
 
         # Gap filter
         best_score = chunks[0].similarity_score
-        gap_cutoff = best_score - 0.03
+        gap_cutoff = best_score - 0.015
         chunks = [c for c in chunks if c.similarity_score >= gap_cutoff]
+
+        # Subject isolation filter
+        # If we have a decent match, don't mix subjects (e.g. don't mix Math and CS)
+        if best_score > 0.50:
+            top_subject = chunks[0].subject
+            if top_subject:
+                chunks = [c for c in chunks if c.subject == top_subject]
 
         return chunks
 
