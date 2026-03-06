@@ -41,14 +41,55 @@ st.markdown("""
         --off-white: #FAFAFA;
         --card-bg: rgba(255, 255, 255, 0.65);
         --glass-border: rgba(255, 255, 255, 0.45);
+        --bg-gradient: linear-gradient(180deg, #FFF3E6 0%, #FFDCC8 12%, #F5E6F0 35%, #E8EDF8 55%, #F0F4FF 75%, #FAFBFF 100%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+            --orange: #FF6B2B;
+            --orange-light: rgba(255, 107, 43, 0.15);
+            --deep-black: #FFFFFF;
+            --charcoal: #E5E7EB;
+            --warm-gray: #9CA3AF;
+            --light-gray: #6B7280;
+            --off-white: #111827;
+            --card-bg: rgba(31, 41, 55, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg-gradient: linear-gradient(180deg, #1A1210 0%, #2A1710 12%, #18151A 35%, #10141C 55%, #0B101A 75%, #080A0F 100%);
+        }
+    }
+
+    /* Manual dark mode override if system is light but user toggles dark */
+    :root[data-theme="dark"] {
+        --orange: #FF6B2B;
+        --orange-light: rgba(255, 107, 43, 0.15);
+        --deep-black: #FFFFFF;
+        --charcoal: #E5E7EB;
+        --warm-gray: #9CA3AF;
+        --light-gray: #6B7280;
+        --off-white: #111827;
+        --card-bg: rgba(31, 41, 55, 0.65);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --bg-gradient: linear-gradient(180deg, #1A1210 0%, #2A1710 12%, #18151A 35%, #10141C 55%, #0B101A 75%, #080A0F 100%);
+    }
+
+    /* Manual light mode override if system is dark but user toggles light */
+    :root[data-theme="light"] {
+        --orange: #FF4D00;
+        --orange-light: rgba(255, 77, 0, 0.08);
+        --deep-black: #131313;
+        --charcoal: #2D2D2D;
+        --warm-gray: #6B6B6B;
+        --light-gray: #9CA3AF;
+        --off-white: #FAFAFA;
+        --card-bg: rgba(255, 255, 255, 0.65);
+        --glass-border: rgba(255, 255, 255, 0.45);
+        --bg-gradient: linear-gradient(180deg, #FFF3E6 0%, #FFDCC8 12%, #F5E6F0 35%, #E8EDF8 55%, #F0F4FF 75%, #FAFBFF 100%);
     }
 
     /* ─── Background ─── */
     .stApp {
-        background: linear-gradient(180deg,
-            #FFF3E6 0%, #FFDCC8 12%, #F5E6F0 35%,
-            #E8EDF8 55%, #F0F4FF 75%, #FAFBFF 100%
-        ) !important;
+        background: var(--bg-gradient) !important;
         font-family: 'Inter', -apple-system, sans-serif;
     }
 
@@ -162,7 +203,7 @@ st.markdown("""
     .stChatInput > div {
         border-radius: 50px !important;
         border: 2px solid rgba(255,77,0,0.12) !important;
-        background: rgba(255,255,255,0.85) !important;
+        background: var(--card-bg) !important;
         backdrop-filter: blur(10px) !important;
         box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
         transition: all 0.3s ease !important;
@@ -261,11 +302,89 @@ st.markdown("""
     .stDeployButton, #MainMenu, footer, header { display: none !important; visibility: hidden !important; }
     div[data-testid="stTextInput"] { display: none !important; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,77,0,0.15); border-radius: 10px; }
+    /* ─── Theme Toggle Button ─── */
+    .theme-toggle {
+        position: fixed;
+        bottom: 25px; /* Above the footer text */
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 100001;
+        transition: all 0.3s ease;
+        color: var(--charcoal);
+        font-size: 1.1rem;
+    }
+    .theme-toggle:hover {
+        transform: scale(1.1);
+        border-color: var(--orange);
+        color: var(--orange);
+    }
+    /* We inject an invisible hidden input to bridge JS logic */
+    #theme-switch-hack { display: none; }
+
 </style>
+
+<!-- Theme Toggle JavaScript Logic -->
+<script>
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // Set initial icon based on actual current theme (localStorage OR system)
+    function updateThemeIcon() {
+        const docTheme = window.parent.document.documentElement.getAttribute('data-theme');
+        const activeTheme = docTheme || getSystemTheme();
+        const iconElement = window.parent.document.getElementById('theme-icon');
+        if (iconElement) {
+            iconElement.innerHTML = activeTheme === 'dark' ? '☀️' : '🌙';
+        }
+    }
+
+    // Initialize toggle listener
+    function initThemeToggle() {
+        const toggleBtn = window.parent.document.getElementById('theme-toggle-btn');
+        if (toggleBtn && !toggleBtn.hasAttribute('data-initialized')) {
+            toggleBtn.setAttribute('data-initialized', 'true');
+            
+            // Apply stored theme on load
+            const storedTheme = localStorage.getItem('srm_doubt_theme');
+            if (storedTheme) {
+                window.parent.document.documentElement.setAttribute('data-theme', storedTheme);
+            }
+
+            updateThemeIcon();
+
+            toggleBtn.addEventListener('click', () => {
+                const currentDataTheme = window.parent.document.documentElement.getAttribute('data-theme');
+                const systemTheme = getSystemTheme();
+                
+                // Determine what the current effectively applied theme is
+                const currentIsDark = currentDataTheme ? (currentDataTheme === 'dark') : (systemTheme === 'dark');
+                const newTheme = currentIsDark ? 'light' : 'dark';
+                
+                window.parent.document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('srm_doubt_theme', newTheme);
+                updateThemeIcon();
+            });
+        }
+    }
+
+    // Run when iframe loads (Streamlit uses iframes for components)
+    setTimeout(initThemeToggle, 500);
+</script>
+
+<div id="theme-toggle-btn" class="theme-toggle">
+    <span id="theme-icon">🌙</span>
+</div>
 """, unsafe_allow_html=True)
 
 # ── Particles ─────────────────────────────────────────────────────────────────
