@@ -57,6 +57,7 @@ SYLLABUS_KB = {
     },
     "Programming For Problem Solving": {
         "semester": 1,
+        "language": "C",
         "units": {
             "Introduction to C": "History of C, data types, variables, constants, operators, expressions, input/output functions printf scanf, type casting, storage classes.",
             "Control Structures": "Decision making if else switch, loops for while do-while, break continue goto, nested loops, problem solving with loops.",
@@ -141,6 +142,7 @@ SYLLABUS_KB = {
     },
     "Object Oriented Design And Programming": {
         "semester": 2,
+        "language": "C++",
         "units": {
             "OOP Fundamentals": "Object-oriented paradigm, classes and objects, data abstraction, encapsulation, access specifiers public private protected, constructors and destructors, this pointer.",
             "Inheritance": "Types of inheritance single multiple multilevel hierarchical hybrid, base and derived classes, virtual base class, constructor calling order, method overriding.",
@@ -195,6 +197,7 @@ SYLLABUS_KB = {
     # ═══════════════════════════════════════════════════════════════════
     "Data Structures And Algorithm": {
         "semester": 3,
+        "language": "C",
         "units": {
             "Arrays and Linked Lists": "Arrays operations traversal insertion deletion search, time complexity Big-O notation, singly linked list, doubly linked list, circular linked list, linked list operations, comparison of arrays and linked lists.",
             "Stacks and Queues": "Stack ADT LIFO, push pop peek operations, stack applications infix postfix prefix expression evaluation, queue ADT FIFO, circular queue, priority queue, deque, queue applications BFS CPU scheduling.",
@@ -235,6 +238,7 @@ SYLLABUS_KB = {
     },
     "Advanced Programming Practice": {
         "semester": 3,
+        "language": "Java",
         "units": {
             "Java Fundamentals": "Java features platform independence, JVM JDK JRE, data types, operators, control flow, arrays, strings, packages.",
             "OOP in Java": "Classes objects, inheritance, polymorphism, abstraction, interfaces, abstract classes, inner classes, access modifiers.",
@@ -275,6 +279,7 @@ SYLLABUS_KB = {
     },
     "Foundation of Data Science (FDS)": {
         "semester": 3,
+        "language": "Python",
         "units": {
             "Data Science Basics": "Data science lifecycle, types of data, data collection, data cleaning, exploratory data analysis EDA.",
             "Statistics": "Descriptive statistics mean median mode, probability distributions normal binomial Poisson, hypothesis testing, confidence intervals, correlation regression.",
@@ -289,6 +294,7 @@ SYLLABUS_KB = {
     # ═══════════════════════════════════════════════════════════════════
     "Design And Analysis Of Algorithms": {
         "semester": 4,
+        "language": "C/C++",
         "units": {
             "Algorithm Analysis": "Asymptotic notations Big-O Omega Theta, best average worst case, recurrence relations, Master theorem, amortized analysis.",
             "Divide and Conquer": "Merge sort, quick sort, binary search, Strassen's matrix multiplication, closest pair, maximum subarray problem.",
@@ -299,6 +305,7 @@ SYLLABUS_KB = {
     },
     "Database Management Systems": {
         "semester": 4,
+        "language": "SQL",
         "units": {
             "Introduction to DBMS": "Database concepts, DBMS vs file system, data models relational hierarchical network, three schema architecture, data independence.",
             "Relational Model": "Relations, keys primary candidate foreign super, relational algebra selection projection join division, relational calculus, SQL DDL DML DCL.",
@@ -309,6 +316,7 @@ SYLLABUS_KB = {
     },
     "Artificial Intelligence": {
         "semester": 4,
+        "language": "Python",
         "units": {
             "Introduction to AI": "AI history, intelligent agents, agent types simple reflex model-based goal-based utility-based, environment types, Turing test, AI applications.",
             "Search Algorithms": "Uninformed search BFS DFS DLS IDS UCS, informed search A* greedy best-first, heuristic functions, local search hill climbing simulated annealing genetic algorithms.",
@@ -329,6 +337,7 @@ SYLLABUS_KB = {
     },
     "Internet Of Things (IOT)": {
         "semester": 4,
+        "language": "C/Python (Arduino/Raspberry Pi)",
         "units": {
             "IoT Architecture": "IoT reference model, IoT protocols MQTT CoAP HTTP, IoT communication models, IoT vs M2M.",
             "Sensors and Actuators": "Types of sensors temperature humidity pressure motion, actuators motors relays, ADC DAC.",
@@ -353,6 +362,7 @@ SYLLABUS_KB = {
     },
     "Full Stack Web Development": {
         "semester": 5,
+        "language": "JavaScript/Node.js",
         "units": {
             "Frontend": "HTML5 semantic elements, CSS3 flexbox grid, JavaScript ES6+, DOM manipulation, responsive design, React/Angular basics.",
             "Backend": "Node.js, Express.js, REST API design, routing, middleware, authentication JWT sessions, MVC pattern.",
@@ -383,6 +393,7 @@ SYLLABUS_KB = {
     },
     "Machine Learning": {
         "semester": 5,
+        "language": "Python",
         "units": {
             "ML Fundamentals": "Types of learning supervised unsupervised reinforcement, training testing validation, bias-variance tradeoff, overfitting underfitting, cross-validation.",
             "Regression": "Linear regression, multiple regression, polynomial regression, gradient descent, regularization L1 L2, evaluation metrics MSE RMSE R-squared.",
@@ -397,6 +408,7 @@ SYLLABUS_KB = {
     # ═══════════════════════════════════════════════════════════════════
     "Data Science": {
         "semester": 6,
+        "language": "Python",
         "units": {
             "Data Wrangling": "Data cleaning, missing values handling, outlier detection, feature engineering, data transformation, ETL pipelines.",
             "Statistical Analysis": "Hypothesis testing t-test chi-square ANOVA, correlation analysis, regression analysis, time series analysis.",
@@ -556,24 +568,30 @@ def generate_documents():
     docs = []
     for subject, info in SYLLABUS_KB.items():
         semester = info["semester"]
+        language = info.get("language", "")
         for unit_name, unit_content in info["units"].items():
             # Create a rich document for each unit
+            lang_line = f"Programming Language: {language}\n" if language else ""
             text = (
-                f"Subject: {subject} | Semester: {semester} | Unit: {unit_name}\n\n"
+                f"Subject: {subject} | Semester: {semester} | Unit: {unit_name}\n"
+                f"{lang_line}\n"
                 f"Key Topics and Concepts:\n{unit_content}\n\n"
                 f"This unit covers the following in the {subject} course "
                 f"(Semester {semester}) at SRM Institute of Science and Technology."
             )
+            metadata = {
+                "subject": subject,
+                "semester": semester,
+                "unit_name": unit_name,
+                "source_filename": f"syllabus_sem{semester}_{subject.lower().replace(' ', '_')}.txt",
+                "slide_number": 1,
+                "source_type": "syllabus_kb",
+            }
+            if language:
+                metadata["language"] = language
             doc = Document(
                 page_content=text,
-                metadata={
-                    "subject": subject,
-                    "semester": semester,
-                    "unit_name": unit_name,
-                    "source_filename": f"syllabus_sem{semester}_{subject.lower().replace(' ', '_')}.txt",
-                    "slide_number": 1,
-                    "source_type": "syllabus_kb",
-                }
+                metadata=metadata,
             )
             docs.append(doc)
     return docs
