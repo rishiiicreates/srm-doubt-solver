@@ -249,4 +249,4 @@ The key insight: the syllabus KB tells the LLM **what topics are valid**, and th
 
 ## 📝 License
 
-This project is for educational purposes at SRM Institute of Science and Technology.
+This project is for educational purposes only.
