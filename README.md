@@ -103,6 +103,63 @@ Open **http://localhost:8501** in your browser.
 
 ---
 
+## 🔑 Using an External Model API (e.g., Groq / OpenAI)
+
+By default, this project uses **Ollama** to run Llama 3 locally. If you want to use an external API (like Groq, OpenAI, or Anthropic) to save local resources or get faster responses, follow these steps:
+
+### 1. Install the Required LangChain Integration
+Depending on your provider, install the required package:
+```bash
+# For Groq
+pip install langchain-groq
+
+# For OpenAI
+pip install langchain-openai
+```
+
+### 2. Update `config.py`
+Add your API key constant (or load it from `.env` using `python-dotenv`):
+```python
+import os
+
+# Add your API Key (Make sure to avoid committing this!)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "your-groq-api-key-here")
+# OR
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key-here")
+```
+
+### 3. Update `llm.py`
+Change the `create_llm()` function to instantiate your new model instead of `OllamaLLM`.
+
+**Example using Groq (Llama 3 70B):**
+```python
+from langchain_groq import ChatGroq
+from config import GROQ_API_KEY, LLM_TEMPERATURE
+
+def create_llm():
+    return ChatGroq(
+        groq_api_key=GROQ_API_KEY,
+        model_name="llama3-70b-8192",
+        temperature=LLM_TEMPERATURE
+    )
+```
+
+**Example using OpenAI (GPT-4o):**
+```python
+from langchain_openai import ChatOpenAI
+from config import OPENAI_API_KEY, LLM_TEMPERATURE
+
+def create_llm():
+    return ChatOpenAI(
+        api_key=OPENAI_API_KEY,
+        model="gpt-4o",
+        temperature=LLM_TEMPERATURE
+    )
+```
+*Note: This only replaces the text generation model. The document embeddings will still use Ollama (`nomic-embed-text`). If you want to use external embeddings (like OpenAI embeddings), you must also update the `EMBEDDING_MODEL` logic in `ingest.py` and `retriever.py` to use `OpenAIEmbeddings`.*
+
+---
+
 ## 📚 Subjects Covered
 
 ### Semester 1 (13 subjects)
