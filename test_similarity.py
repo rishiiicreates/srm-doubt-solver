@@ -1,7 +1,6 @@
 import sys
-from retriever import Retriever
+from retriever import retrieve
 
-r = Retriever()
 queries = [
     "what is inheritance?",
     "explain Laplace transforms",
@@ -12,9 +11,10 @@ queries = [
 print("--- Similarity Test ---")
 for q in queries:
     print(f"\nQuery: '{q}'")
-    res = r.retrieve(q, top_k=5, threshold=0.0) # No threshold to see all scores
+    # Call the singleton wrapper instead
+    res = retrieve(q)
     if res.chunks:
         for i, c in enumerate(res.chunks[:3]):
-            print(f"  {i+1}. Score: {c.similarity_score:.4f} | Subj: {c.metadata.get('subject', 'N/A')} | Unit: {c.metadata.get('unit_name', 'N/A')}")
+            print(f"  {i+1}. Score: {c.similarity_score:.4f} | Subj: {c.subject} | Unit: {c.unit_name}")
     else:
         print("  No chunks returned.")

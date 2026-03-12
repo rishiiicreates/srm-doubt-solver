@@ -203,29 +203,31 @@ class SyllabusRetriever:
         Precision filter to ensure only genuinely relevant
         chunks appear in the source references.
 
-        Gap filter: Only keep chunks within 1.5% similarity
-        of the best match.
-        Subject isolation: Only keep chunks from the top-scoring subject.
+        1. Subject isolation: Keep only the top-scoring subject's chunks.
+        2. Gap filter: Within that subject, keep chunks within 10% of the best.
+        3. Cap at 3 for a concise Referenced Topics card.
         """
         if not chunks:
             return chunks
 
         # Sort by similarity (highest first)
         chunks.sort(key=lambda c: c.similarity_score, reverse=True)
-
-        # Gap filter
         best_score = chunks[0].similarity_score
-        gap_cutoff = best_score - 0.015
-        chunks = [c for c in chunks if c.similarity_score >= gap_cutoff]
 
-        # Subject isolation filter
-        # If we have a decent match, don't mix subjects (e.g. don't mix Math and CS)
-        if best_score > 0.50:
+        # Subject isolation first — don't mix subjects
+        if best_score > 0.55:
             top_subject = chunks[0].subject
             if top_subject:
                 chunks = [c for c in chunks if c.subject == top_subject]
 
-        return chunks
+        # Gap filter — keep results within 10% of the best same-subject match
+        if chunks:
+            best_in_subject = chunks[0].similarity_score
+            gap_cutoff = best_in_subject - 0.10
+            chunks = [c for c in chunks if c.similarity_score >= gap_cutoff]
+
+        # Cap at 3 results for a concise Referenced Topics card
+        return chunks[:3]
 
     def _build_filter(
         self,

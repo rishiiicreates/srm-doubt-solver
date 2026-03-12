@@ -110,7 +110,7 @@ def rewrite_query(
         enhanced_query = f"{subject}: {raw_query}"
 
     # Skip rewriting for queries that are already clear and academic
-    if _is_clear_query(enhanced_query):
+    if not chat_history and _is_clear_query(enhanced_query):
         return enhanced_query
 
     llm = create_llm()

@@ -49,6 +49,8 @@ def discover_documents(data_dir: str) -> list[str]:
     for root, _dirs, files in os.walk(data_dir):
         for f in files:
             if f.lower().endswith((".ppt", ".pptx", ".pdf")):
+                if f.lower() == "dsai_syllabus.pdf":
+                    continue
                 doc_files.append(os.path.join(root, f))
 
     doc_files.sort()
