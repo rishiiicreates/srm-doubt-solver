@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore", message=".*Pydantic V1.*Python 3.14.*")
 
 # ── Ollama ────────────────────────────────────────────────────────────────────
 OLLAMA_BASE_URL: str = "http://localhost:11434"
-LLM_MODEL: str = "llama3"
+LLM_MODEL: str = "deepseek-v3.1:671b-cloud"
 EMBEDDING_MODEL: str = "nomic-embed-text"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
