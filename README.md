@@ -250,3 +250,5 @@ The key insight: the syllabus KB tells the LLM **what topics are valid**, and th
 ## 📝 License
 
 This project is for educational purposes only.
+build by ~ rishiicreates 
+
