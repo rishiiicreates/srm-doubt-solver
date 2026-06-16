@@ -1,31 +1,259 @@
-# srm-doubt-solver
+# doubt-solver
 
-## 🚀 Project Overview
-This repository contains the source code and documentation for **srm-doubt-solver**, developed by [rishiiicreates](https://github.com/rishiiicreates).
+An AI-powered academic assistant that answers student doubts for **B.tech CSE* — covering **56 subjects across 7 semesters**.
 
-## 🛠 Tech Stack
-- Built with a passion for clean code and efficiency.
-- Designed for scalability and performance.
 
-## 📖 Getting Started
+Built with **Ollama (Llama 3)**, **ChromaDB**, **LangChain**, and **Streamlit**.
 
-### Prerequisites
-Ensure you have the necessary environment installed before proceeding.
 
-### Installation
-```bash
-# Clone the repository
-git clone https://github.com/rishiiicreates/srm-doubt-solver.git
 
-# Navigate to the directory
-cd srm-doubt-solver
+---
+
+## ✨ Features
+
+- **Full Syllabus Coverage** — 56 subjects, 229 topic units, semesters 1-7
+- **Intelligent Doubt Solving** — Detailed, professor-quality explanations
+- **Subject & Semester Filtering** — Filter answers by specific semester or subject
+- **Source Citations** — Every answer cites the relevant Subject, Semester, and Unit
+- **Off-Topic Refusal** — Politely declines non-academic questions
+- **Query Rewriting** — Rewrites casual student queries for better retrieval
+- **Response Caching** — Caches answers for instant repeat lookups
+- **Streaming Responses** — Real-time token streaming in the chat UI
+- **Beautiful UI** — Dark glassmorphic design with gradient accents
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌───────────┐
+│  Streamlit   │────▶│  LLM Chain   │────▶│  Ollama   │
+│  Chat UI     │     │  (llm.py)    │     │  Llama 3  │
+└──────┬───────┘     └──────┬───────┘     └───────────┘
+       │                    │
+       │              ┌─────▼──────┐     ┌────────────┐
+       │              │  Retriever  │────▶│  ChromaDB  │
+       │              │(retriever.py│     │ VectorStore│
+       │              └────────────┘     └────────────┘
+       │                                       ▲
+       │              ┌────────────┐           │
+       └─────────────▶│   Ingest   │───────────┘
+                      │ (ingest.py)│
+                      └─────┬──────┘
+                            │
+                      ┌─────▼──────┐
+                      │Syllabus KB │
+                      │ 229 topics │
+                      └────────────┘
 ```
 
-## 💻 Usage
-Detailed instructions on how to run this project can be found in the technical documentation or the code comments.
+### Key Files
 
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome!
+| File | Purpose |
+|------|---------|
+| `app.py` | Streamlit chat UI with sidebar filters |
+| `config.py` | All configuration constants and system prompt |
+| `llm.py` | LLM chain, query rewriting, caching, streaming |
+| `retriever.py` | ChromaDB similarity search with metadata filtering |
+| `ingest.py` | Ingestion pipeline — embeds and stores in ChromaDB |
+| `generate_syllabus_kb.py` | Comprehensive syllabus knowledge base (56 subjects) |
+| `utils/chunker.py` | Token-aware sliding window chunker |
+| `utils/downloader.py` | Web scraper for thehelpers.vercel.app (optional) |
 
-## 📜 License
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+
+- **Python 3.10+**
+- **Ollama** installed and running ([install guide](https://ollama.ai))
+
+### 1. Clone and setup
+
+```bash
+cd "oodp rag project."
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Pull Ollama models
+
+```bash
+ollama pull llama3
+ollama pull nomic-embed-text
+```
+
+### 3. Run ingestion
+
+```bash
+python3 ingest.py --skip-scrape --reindex
+```
+
+This will:
+- Generate 229 syllabus KB documents covering all subjects
+- Embed them using `nomic-embed-text`
+- Store in ChromaDB vector store
+
+### 4. Launch the app
+
+```bash
+streamlit run app.py
+```
+
+Open **http://localhost:8501** in your browser.
+
+---
+
+## 🔑 Using an External Model API (e.g., Groq / OpenAI)
+
+By default, this project uses **Ollama** to run Llama 3 locally. If you want to use an external API (like Groq, OpenAI, or Anthropic) to save local resources or get faster responses, follow these steps:
+
+### 1. Install the Required LangChain Integration
+Depending on your provider, install the required package:
+```bash
+# For Groq
+pip install langchain-groq
+
+# For OpenAI
+pip install langchain-openai
+```
+
+### 2. Update `config.py`
+Add your API key constant (or load it from `.env` using `python-dotenv`):
+```python
+import os
+
+# Add your API Key (Make sure to avoid committing this!)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "your-groq-api-key-here")
+# OR
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key-here")
+```
+
+### 3. Update `llm.py`
+Change the `create_llm()` function to instantiate your new model instead of `OllamaLLM`.
+
+**Example using Groq (Llama 3 70B):**
+```python
+from langchain_groq import ChatGroq
+from config import GROQ_API_KEY, LLM_TEMPERATURE
+
+def create_llm():
+    return ChatGroq(
+        groq_api_key=GROQ_API_KEY,
+        model_name="llama3-70b-8192",
+        temperature=LLM_TEMPERATURE
+    )
+```
+
+**Example using OpenAI (GPT-4o):**
+```python
+from langchain_openai import ChatOpenAI
+from config import OPENAI_API_KEY, LLM_TEMPERATURE
+
+def create_llm():
+    return ChatOpenAI(
+        api_key=OPENAI_API_KEY,
+        model="gpt-4o",
+        temperature=LLM_TEMPERATURE
+    )
+```
+*Note: This only replaces the text generation model. The document embeddings will still use Ollama (`nomic-embed-text`). If you want to use external embeddings (like OpenAI embeddings), you must also update the `EMBEDDING_MODEL` logic in `ingest.py` and `retriever.py` to use `OpenAIEmbeddings`.*
+
+---
+
+## 📚 Subjects Covered
+
+### Semester 1 (13 subjects)
+Calculus & Linear Algebra, Chemistry, Philosophy of Engineering, Computational Biology, Programming for Problem Solving (C), Economics, Biomedical Sensors, Foreign Languages, Cell Biology, Microbiology, Physical & Analytical Chemistry, Biochemistry, Civil & Mechanical Workshop
+
+### Semester 2 (9 subjects)
+Advanced Calculus & Complex Analysis, Electrical & Electronics Engineering, Semiconductor Physics, Physics-Mechanics, Object Oriented Design & Programming (C++), Communicative English, Electromagnetic Physics, Engineering Mechanics, Electronic System & PCB Design
+
+### Semester 3 (15 subjects)
+Data Structures & Algorithm, Computer Organization & Architecture, Operating Systems, Transforms & Boundary Value Problems, Advanced Programming Practice (Java), Design Thinking, Digital Logic Design, Solid State Devices, Electromagnetic Theory, Basic Chemical Engineering, Genetics & Cytogenetics, Social Engineering, Numerical Methods, Foundation of Data Science, Bioprocess Principles
+
+### Semester 4 (10 subjects)
+Design & Analysis of Algorithms, Database Management Systems, Artificial Intelligence, Probability & Queueing Theory, Social Engineering, Cell Communication & Signaling, Software Process, Chemical Engineering Principles, Molecular Biology, Internet of Things (IoT)
+
+### Semester 5 (5 subjects)
+Discrete Mathematics, Full Stack Web Development, Formal Language & Automata, Computer Networks, Machine Learning
+
+### Semester 6 (3 subjects)
+Data Science, Software Engineering & Project Management, Compiler Design
+
+### Semester 7 (1 subject)
+Behavioral Psychology
+
+---
+
+## 🔧 Configuration
+
+All settings are in `config.py`:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `LLM_MODEL` | `llama3` | Ollama model for generation |
+| `EMBEDDING_MODEL` | `nomic-embed-text` | Ollama model for embeddings |
+| `LLM_NUM_CTX` | `4096` | Context window size |
+| `TOP_K` | `8` | Number of chunks to retrieve |
+| `SIMILARITY_THRESHOLD` | `0.3` | Minimum similarity score |
+| `CHUNK_SIZE` | `200` | Target tokens per chunk |
+
+---
+
+## 🧪 Example Queries
+
+- "Explain Dijkstra's shortest path algorithm"
+- "What is the difference between TCP and UDP?"
+- "Explain inheritance types in C++ OOP"
+- "What is normalization in DBMS? Explain all normal forms"
+- "Explain the working of an AVL tree with rotations"
+- "What is Fourier Transform and its applications?"
+- "Explain the OSI model layers"
+
+Off-topic queries like "Who is the Prime Minister?" will be politely refused.
+
+---
+
+## 📁 Project Structure
+
+```
+oodp rag project./
+├── app.py                    # Streamlit chat UI
+├── config.py                 # Configuration constants
+├── llm.py                    # LLM chain & streaming
+├── retriever.py              # ChromaDB retrieval
+├── ingest.py                 # Ingestion pipeline
+├── generate_syllabus_kb.py   # Syllabus knowledge base
+├── requirements.txt          # Python dependencies
+├── utils/
+│   ├── chunker.py            # Token-aware chunker
+│   └── downloader.py         # Web scraper (optional)
+├── data/                     # Supplementary PPT files (optional)
+├── vectorstore/              # ChromaDB persistence
+└── venv/                     # Python virtual environment
+```
+
+---
+
+## 🛠️ How It Works
+
+1. **Syllabus KB** — `generate_syllabus_kb.py` contains detailed topic descriptions for every subject/unit in the SRM curriculum
+2. **Ingestion** — `ingest.py` generates 229 LangChain Documents from the KB, embeds them with `nomic-embed-text`, and stores in ChromaDB
+3. **Retrieval** — When a student asks a question, `retriever.py` finds the most relevant syllabus topics using cosine similarity
+4. **Generation** — `llm.py` sends the matched topics as context to Llama 3, which generates a detailed, comprehensive answer
+5. **Guardrails** — If no syllabus topic matches (similarity < threshold), the system refuses the question
+
+The key insight: the syllabus KB tells the LLM **what topics are valid**, and the LLM answers from its comprehensive training knowledge. This gives detailed, accurate answers without needing to download hundreds of PPT files.
+
+---
+
+## 📝 License
+
+This project is for educational purposes only.
+build by ~ [rishiicreate](https://github.com/rishiiicreates)
+
 This project is licensed under the MIT License.
