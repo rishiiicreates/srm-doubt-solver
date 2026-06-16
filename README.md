@@ -254,6 +254,6 @@ The key insight: the syllabus KB tells the LLM **what topics are valid**, and th
 ## 📝 License
 
 This project is for educational purposes only.
-build by ~ [rishiicreate](https://github.com/rishiiicreates)
+build by ~ [rishiicreates](https://github.com/rishiiicreates)
 
 This project is licensed under the MIT License.
